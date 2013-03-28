@@ -1,0 +1,27 @@
+
+gluLookAt: Defines the camera
+    gluLookAt (eye x,y,z,  center x,y,z,   up x,y,z)
+     
+	 up
+	 ^
+	 |
+	 | 
+    eye ----> center    : eye-center = +z
+
+-----------------------------------------	
+
+  1. gluLookat
+  2. projection -- gluPerspective
+  
+-----------------------------------------
+  
+ gluPerspective (fovy, aspect_ratio, zNear > 0, zFar > 0)
+    (.) ----- | -----0------ | -----> -z
+             zNear         zFar
+			 (-1)          (+1)
+------------------------------------------
+
+Matrix Pipeline:
+    viewport x gluPerspective x gluLookAt
+   (actual window) (cube-> frustum)   (world-> eye)
+    			 
