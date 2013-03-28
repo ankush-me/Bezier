@@ -1,5 +1,7 @@
+#include <vector>
 #include <string.h>
 #include <iostream>
+#include <fstream>
 #include <Eigen/Dense>
 
 using namespace Eigen;
@@ -13,9 +15,9 @@ using namespace std;
  *                                                                p3_x, p3_y, p3_z ]
  *  where a(u) is the point parameterized by u and p_i are the control points.*/
 const Matrix4f BezierBasis = (Matrix4f() << 1.f,  0.f,  0.f,  0.f,
-		                                    -3.f,  3.f,  0.f,  0.f,
-		                                     3.f, -6.f,  3.f,  0.f,
-		                                    -1.f,  3.f,  -3.f, 1.f). finished();
+		-3.f,  3.f,  0.f,  0.f,
+		3.f, -6.f,  3.f,  0.f,
+		-1.f,  3.f,  -3.f, 1.f). finished();
 
 const Matrix4f BezierBasisTranspose = BezierBasis.transpose();
 
@@ -62,7 +64,7 @@ float bezierEval2D(const Matrix4f &mat, float u, float v) {
  *
  *  Assumes, that u is down the column, v is across the row of MAT.*/
 Vector3f bezierEval2D(const Matrix4f &matX, const Matrix4f &matY, const Matrix4f &matZ,
-						float u, float v) {
+		float u, float v) {
 	return Vector3f(bezierEval2D(matX, u,v), bezierEval2D(matY, u,v), bezierEval2D(matZ, u,v));
 }
 
@@ -79,36 +81,121 @@ float bezierEval2DTangentV(const Matrix4f &mat, float u, float v) {
 
 /** Evaluates the tangent along the 'u' parameter of a 2D surface.*/
 Vector3f bezierEval2DTangentU(const Matrix4f &matX, const Matrix4f &matY, const Matrix4f &matZ,
-								 float u, float v) {
+		float u, float v) {
 	return Vector3f(bezierEval2DTangentU(matX, u,v),
-					 bezierEval2DTangentU(matY, u,v),
-					 bezierEval2DTangentU(matZ, u,v));
+			bezierEval2DTangentU(matY, u,v),
+			bezierEval2DTangentU(matZ, u,v));
 }
 
 /** Evaluates the tangent along the 'v' parameter of a 2D surface.*/
 Vector3f bezierEval2DTangentV(const Matrix4f &matX, const Matrix4f &matY, const Matrix4f &matZ,
-								 float u, float v) {
+		float u, float v) {
 	return Vector3f(bezierEval2DTangentV(matX, u,v),
-					 bezierEval2DTangentV(matY, u,v),
-					 bezierEval2DTangentV(matZ, u,v));
+			bezierEval2DTangentV(matY, u,v),
+			bezierEval2DTangentV(matZ, u,v));
 }
 
 /* Evaluates the tangent at a point pt(u,v) of a Bezier CURVE. */
 Vector3f bezierEval2DNormal(const Matrix4f &matX, const Matrix4f &matY, const Matrix4f &matZ,
-							  float u, float v) {
+		float u, float v) {
 	Vector3f tangentU =  bezierEval2DTangentU(matX, matY, matZ, u, v);
 	Vector3f tangentV =  bezierEval2DTangentV	(matX, matY, matZ, u, v);
 	return (tangentU.cross(tangentV)).normalized();
 }
 
 
+// vertex which stores position and normal
+struct VertexNormal {
+	const Vector3f pos;
+	const Vector3f normal;
+	VertexNormal (const Vector3f &_pos, const Vector3f & _normal) : pos(_pos), normal(_normal) {}
+};
+
 
 /* Class to represent a Bezier Patch: Defined by 16 control points.*/
 class BezierPatch {
+
+	const float step;              // step-size for uniform sampling
+	const float tolerance;         // tolerance for adaptive sampling
+
 	MatrixXf data;
+	Matrix4f matX, matY, matZ;      // store the coordinates of the control points
+
+	vector<VertexNormal> uniformSamples;  // vertices found using uniform samples
+	vector<VertexNormal> adaptiveSamples; // vertices found using adaptive sampling
+
 
 public:
-	BezierPatch (const MatrixXf & _data, float _step=0.01) : data(_data) {
-		assert(("Bezier Patch did not get 16 3-dimensional points.", data.rows()==16 && data.cols()==3));
+	BezierPatch (const MatrixXf & _data, float _tolerance = 0.001, float _step=0.01) :
+		data(_data), step(_step), tolerance(_tolerance) {
+		assert(("BezierPatch did not get correct patch data. Expecting 4x12 matrix.",
+				 data.rows()==4 && data.cols()==12));
+
+		for (int i = 0; i < 4; i+=1) {  // get the coordinates of the control points.
+			matX.col(i) = data.col(3*i);
+			matY.col(i) = data.col(3*i +1);
+			matZ.col(i) = data.col(3*i + 2);
+		}
 	}
+
+	/* Draws the patch in openGL.
+	 * if DRAWUNIFORM is true, uniformly sampled patch is drawn,
+	 * else adaptively-sampled patch is drawn.*/
+	void drawPatch(bool drawUniform);
+
+	/** Sample the bezier patch uniformly with STEP.*/
+	void sampleUniformly() {}
+
+
+	void adaptiveSample() {}
 };
+
+/** Reads a .bez file. */
+vector<BezierPatch> readPatches(std::string fname) {
+	vector <BezierPatch> patches;
+	int num_patches   = -1;
+	bool readNum      = false;
+
+	ifstream inpfile(fname.c_str());
+	if(!inpfile.is_open()) {
+		cout << "Unable to open file : " << fname << endl;
+	} else {
+		MatrixXf *mat = new MatrixXf(4,12);
+		int row = 0;
+
+		while(!inpfile.eof()) {
+			string line;
+			getline(inpfile,line);
+			vector<string> splitline;
+			string buf;
+			stringstream ss(line);
+
+			while (ss >> buf)
+				splitline.push_back(buf);
+
+			if (splitline.size()==0) // skip the blank line
+				continue;
+
+			if (!readNum) {
+				num_patches = atof(splitline[0].c_str());
+				readNum     = true;
+				cout << "Number of patches: "<< num_patches<<endl;
+				continue;
+			}
+
+			assert (("Expecting 12 values per row. Not Found!", splitline.size()==12));
+			for (int i=0; i < 12; i +=1)
+				(*mat)(row, i) = atof(splitline[i].c_str());
+			row += 1;
+
+			if (row == 4) { // start a new patch
+				row = 0;
+				BezierPatch patch(*mat);
+				patches.push_back(patch);
+				mat = new MatrixXf(4,12);
+			}
+		}
+	}
+	assert(("Incorrect number of patches read.", num_patches==patches.size()));
+	return patches;
+}
