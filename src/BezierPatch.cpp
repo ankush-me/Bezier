@@ -114,14 +114,14 @@ void BezierPatch::sampleUniformly(){
 	while (u < 1.0) {
 		float v = 0.0;
 		while (v < 0.0) {
-			VertexNormal vn (bezierEval2D(matX, matY, matZ, u,v),
-					bezierEval2DNormal(matX, matY, matZ, u,v));
+			VertexNormal vn (surfaceEval2D(matX, matY, matZ, u,v),
+					surfaceEval2DNormal(matX, matY, matZ, u,v));
 			uniformSamples.push_back(vn);
 			v += step;
 		}
 		v = 1.f;
-		VertexNormal vn (bezierEval2D(matX, matY, matZ, u,v),
-				bezierEval2DNormal(matX, matY, matZ, u,v));
+		VertexNormal vn (surfaceEval2D(matX, matY, matZ, u,v),
+				surfaceEval2DNormal(matX, matY, matZ, u,v));
 		uniformSamples.push_back(vn);
 		u += step;
 	}
@@ -129,14 +129,14 @@ void BezierPatch::sampleUniformly(){
 	u = 1.0f;
 	float v = 0.0;
 	while (v < 0.0) {
-		VertexNormal vn (bezierEval2D(matX, matY, matZ, u,v),
-				bezierEval2DNormal(matX, matY, matZ, u,v));
+		VertexNormal vn (surfaceEval2D(matX, matY, matZ, u,v),
+				surfaceEval2DNormal(matX, matY, matZ, u,v));
 		uniformSamples.push_back(vn);
 		v += step;
 	}
 	v = 1.f;
-	VertexNormal vn (bezierEval2D(matX, matY, matZ, u,v),
-			bezierEval2DNormal(matX, matY, matZ, u,v));
+	VertexNormal vn (surfaceEval2D(matX, matY, matZ, u,v),
+			surfaceEval2DNormal(matX, matY, matZ, u,v));
 	uniformSamples.push_back(vn);
 }
 
@@ -168,7 +168,7 @@ void BezierPatch::splitTriangle (vector<float> us, vector<float> vs) {
 	Vector3f trianglePt2 = evalPoint(us[2], vs[2]);
 
 	// Check distance of midpoints
-	if (((trianglePt0 + trianglePt1)/2 - evalPoint((us[0]+us[1])/2, (vs[0]+vs[1])/2)).length() > tolerance) {
+	if (((trianglePt0 + trianglePt1)/2 - evalPoint((us[0]+us[1])/2, (vs[0]+vs[1])/2)).norm() > tolerance) {
 		vector<float> us1(3), vs1(3);
 		vector<float> us2(3), vs2(3);
 		us1[0] = us[0]; us1[1] = (us[0]+us[1])/2; us1[2] = us[2];
@@ -179,7 +179,7 @@ void BezierPatch::splitTriangle (vector<float> us, vector<float> vs) {
 		splitTriangle(us1, vs1);
 		splitTriangle(us2, vs2);
 
-	} else if (((trianglePt1 + trianglePt2)/2 - evalPoint((us[1]+us[2])/2, (vs[1]+vs[2])/2)).length() > tolerance) {
+	} else if (((trianglePt1 + trianglePt2)/2 - evalPoint((us[1]+us[2])/2, (vs[1]+vs[2])/2)).norm() > tolerance) {
 		vector<float> us1(3), vs1(3);
 		vector<float> us2(3), vs2(3);
 		us1[0] = us[0]; us1[1] = us[1]; us1[2] = (us[1]+us[2])/2;
@@ -190,7 +190,7 @@ void BezierPatch::splitTriangle (vector<float> us, vector<float> vs) {
 		splitTriangle(us1, vs1);
 		splitTriangle(us2, vs2);
 
-	} else if (((trianglePt2 + trianglePt0)/2 - evalPoint((us[0]+us[2])/2, (vs[0]+vs[2])/2)).length() > tolerance) {
+	} else if (((trianglePt2 + trianglePt0)/2 - evalPoint((us[0]+us[2])/2, (vs[0]+vs[2])/2)).norm() > tolerance) {
 		vector<float> us1(3), vs1(3);
 		vector<float> us2(3), vs2(3);
 		us1[0] = us[0]; us1[1] = us[1]; us1[2] = (us[0]+us[2])/2;
