@@ -144,7 +144,37 @@ public:
 	void drawPatch(bool drawUniform);
 
 	/** Sample the bezier patch uniformly with STEP.*/
-	void sampleUniformly() {}
+	void sampleUniformly() {
+		uniformSamples.clear();
+		float u = 0.0;
+		while (u < 1.0) {
+			float v = 0.0;
+			while (v < 0.0) {
+				VertexNormal vn (bezierEval2D(matX, matY, matZ, u,v),
+							     bezierEval2DNormal(matX, matY, matZ, u,v));
+				uniformSamples.push_back(vn);
+				v += step;
+			}
+			v = 1.f;
+			VertexNormal vn (bezierEval2D(matX, matY, matZ, u,v),
+									     bezierEval2DNormal(matX, matY, matZ, u,v));
+			uniformSamples.push_back(vn);
+			u += step;
+		}
+
+		u = 1.0f;
+		float v = 0.0;
+		while (v < 0.0) {
+			VertexNormal vn (bezierEval2D(matX, matY, matZ, u,v),
+					         bezierEval2DNormal(matX, matY, matZ, u,v));
+			uniformSamples.push_back(vn);
+			v += step;
+		}
+		v = 1.f;
+		VertexNormal vn (bezierEval2D(matX, matY, matZ, u,v),
+				         bezierEval2DNormal(matX, matY, matZ, u,v));
+		uniformSamples.push_back(vn);
+	}
 
 
 	void adaptiveSample() {}
