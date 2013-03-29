@@ -17,7 +17,6 @@ struct VertexNormal {
 	VertexNormal (const Vector3f &_pos, const Vector3f & _normal) : pos(_pos), normal(_normal) {}
 };
 
-
 /* Class to represent a Bezier Patch: Defined by 16 control points.*/
 class BezierPatch {
 
@@ -30,8 +29,21 @@ class BezierPatch {
 	MatrixXf data;
 	Matrix4f matX, matY, matZ;      // store the coordinates of the control points
 
+	// Triangle whose vertices are specified by the indices
+	struct Triangle {
+		vector<unsigned int> indices;
+		Triangle (const int i0, const int i1, const int i2) : indices (3) {
+			indices[0] = i0; indices[1] = i1; indices[2] = i2;
+		}
+		Triangle (const vector<unsigned int> inds) : indices (3) {
+			indices[0] = inds[0]; indices[1] = inds[1]; indices[2] = inds[2];
+		}
+	};
+
 	vector<VertexNormal> uniformSamples;  // vertices found using uniform samples
+	vector<Triangle> uniformTriangles;    // triangles found using uniform samples
 	vector<VertexNormal> adaptiveSamples; // vertices found using adaptive sampling
+	vector<Triangle> adaptiveTriangles;   // triangles found using adaptive sampling
 
 	// powers of parameter used for calculating the points
 	static Vector4f powers(float u) { return Vector4f(1.0, u, u*u, u*u*u);}
@@ -86,7 +98,6 @@ class BezierPatch {
 	static Vector3f surfaceEval2DNormal(const Matrix4f &matX, const Matrix4f &matY, const Matrix4f &matZ,
 			float u, float v);
 
-
 public:
 	BezierPatch (const MatrixXf & _data, float _tolerance = 0.001, float _step=0.01);
 	Vector3f evalPoint (float u, float v);
@@ -102,7 +113,7 @@ public:
 
 
 	void adaptiveSample();
-	void splitTriangle (vector<float> us, vector<float> vs);
+	void splitTriangle (vector<float> us, vector<float> vs, vector<unsigned int> inds);
 };
 
 

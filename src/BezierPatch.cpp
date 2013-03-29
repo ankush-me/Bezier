@@ -149,58 +149,89 @@ void BezierPatch::adaptiveSample () {
 
 	vector<float> us1(3), vs1(3);
 	vector<float> us2(3), vs2(3);
+	vector<unsigned int> inds1(3), inds2(3);
 	us1[0] = 0.0; us1[1] = 1.0; us1[2] = 1.0;
 	vs1[0] = 0.0; vs1[1] = 1.0; vs1[2] = 0.0;
+	inds1[0] = 0; inds1[1] = 2; inds1[2] = 3;
 	us2[0] = 0.0; us2[1] = 0.0; us2[2] = 1.0;
 	vs2[0] = 0.0; vs2[1] = 1.0; vs2[2] = 1.0;
+	inds2[0] = 0; inds2[1] = 1; inds2[2] = 2;
 
-	splitTriangle(us1, vs1);
-	splitTriangle(us2, vs2);
+	adaptiveSamples.push_back(VertexNormal(evalPoint(0.0, 0.0), evalNormal(0.0, 0.0)));
+	adaptiveSamples.push_back(VertexNormal(evalPoint(0.0, 1.0), evalNormal(0.0, 1.0)));
+	adaptiveSamples.push_back(VertexNormal(evalPoint(1.0, 1.0), evalNormal(1.0, 1.0)));
+	adaptiveSamples.push_back(VertexNormal(evalPoint(1.0, 0.0), evalNormal(1.0, 0.0)));
+
+	splitTriangle(us1, vs1, inds1);
+	splitTriangle(us2, vs2, inds2);
+
 }
 
 /**
  * Splits triangle described by us and vs, only if error is greater than threshold.
+ * TODO: Might want to change order of inserting into us, vs so as to make triangulation
+ * look good.
  */
-void BezierPatch::splitTriangle (vector<float> us, vector<float> vs) {
+void BezierPatch::splitTriangle (vector<float> us, vector<float> vs, vector<unsigned int> inds) {
 
-	Vector3f trianglePt0 = evalPoint(us[0], vs[0]);
-	Vector3f trianglePt1 = evalPoint(us[1], vs[1]);
-	Vector3f trianglePt2 = evalPoint(us[2], vs[2]);
+	Vector3f trianglePt0 = adaptiveSamples[inds[0]].pos;
+	Vector3f trianglePt1 = adaptiveSamples[inds[1]].pos;
+	Vector3f trianglePt2 = adaptiveSamples[inds[2]].pos;
 
 	// Check distance of midpoints
 	if (((trianglePt0 + trianglePt1)/2 - evalPoint((us[0]+us[1])/2, (vs[0]+vs[1])/2)).norm() > tolerance) {
+
+		adaptiveSamples.push_back(VertexNormal(evalPoint((us[0]+us[1])/2, (vs[0]+vs[1])/2), evalNormal((us[0]+us[1])/2, (vs[0]+vs[1])/2)));
+		unsigned int newInd = adaptiveSamples.size()-1;
+
 		vector<float> us1(3), vs1(3);
 		vector<float> us2(3), vs2(3);
+		vector<unsigned int> inds1(3), inds2(3);
 		us1[0] = us[0]; us1[1] = (us[0]+us[1])/2; us1[2] = us[2];
 		vs1[0] = vs[0]; vs1[1] = (vs[0]+vs[1])/2; vs1[2] = vs[2];
+		inds1[0] = inds[0]; inds1[1] = newInd; inds1[2] = inds[2];
 		us2[0] = (us[0]+us[1])/2; us2[1] = us[1]; us2[2] = us[2];
 		vs2[0] = (vs[0]+vs[1])/2; vs2[1] = vs[1]; vs2[2] = vs[2];
+		inds2[0] = newInd; inds2[1] = inds[1]; inds2[2] = inds[2];
 
-		splitTriangle(us1, vs1);
-		splitTriangle(us2, vs2);
+		splitTriangle(us1, vs1, inds1);
+		splitTriangle(us2, vs2, inds2);
 
 	} else if (((trianglePt1 + trianglePt2)/2 - evalPoint((us[1]+us[2])/2, (vs[1]+vs[2])/2)).norm() > tolerance) {
+
+		adaptiveSamples.push_back(VertexNormal(evalPoint((us[1]+us[2])/2, (vs[1]+vs[2])/2), evalNormal((us[1]+us[2])/2, (vs[1]+vs[2])/2)));
+		unsigned int newInd = adaptiveSamples.size()-1;
+
 		vector<float> us1(3), vs1(3);
 		vector<float> us2(3), vs2(3);
+		vector<unsigned int> inds1(3), inds2(3);
 		us1[0] = us[0]; us1[1] = us[1]; us1[2] = (us[1]+us[2])/2;
 		vs1[0] = vs[0]; vs1[1] = vs[1]; vs1[2] = (vs[1]+vs[2])/2;
+		inds1[0] = inds[0]; inds1[1] = inds[1]; inds1[2] = newInd;
 		us2[0] = us[0]; us2[1] = (us[1]+us[2])/2; us2[2] = us[2];
 		vs2[0] = vs[0]; vs2[1] = (vs[1]+vs[2])/2; vs2[2] = vs[2];
+		inds2[0] = inds[0]; inds2[1] = newInd; inds2[2] = inds[2];
 
-		splitTriangle(us1, vs1);
-		splitTriangle(us2, vs2);
+		splitTriangle(us1, vs1, inds1);
+		splitTriangle(us2, vs2, inds2);
 
-	} else if (((trianglePt2 + trianglePt0)/2 - evalPoint((us[0]+us[2])/2, (vs[0]+vs[2])/2)).norm() > tolerance) {
+	} else if (((trianglePt0 + trianglePt2)/2 - evalPoint((us[0]+us[2])/2, (vs[0]+vs[2])/2)).norm() > tolerance) {
+
+		adaptiveSamples.push_back(VertexNormal(evalPoint((us[0]+us[2])/2, (vs[0]+vs[2])/2), evalNormal((us[0]+us[2])/2, (vs[1]+vs[2])/2)));
+		unsigned int newInd = adaptiveSamples.size()-1;
+
 		vector<float> us1(3), vs1(3);
 		vector<float> us2(3), vs2(3);
+		vector<unsigned int> inds1(3), inds2(3);
 		us1[0] = us[0]; us1[1] = us[1]; us1[2] = (us[0]+us[2])/2;
 		vs1[0] = vs[0]; vs1[1] = vs[1]; vs1[2] = (vs[0]+vs[2])/2;
+		inds1[0] = inds[0]; inds1[1] = inds[1]; inds1[2] = newInd;
 		us2[0] = (us[0]+us[2])/2; us2[1] = us[1]; us2[2] = us[2];
 		vs2[0] = (vs[0]+vs[2])/2; vs2[1] = vs[1]; vs2[2] = vs[2];
+		inds2[0] = newInd; inds2[1] = inds[1]; inds2[2] = inds[2];
 
-		splitTriangle(us1, vs1);
-		splitTriangle(us2, vs2);
-	} else {
-		// Add triangle
-	}
+		splitTriangle(us1, vs1, inds1);
+		splitTriangle(us2, vs2, inds2);
+
+	} else adaptiveTriangles.push_back(Triangle(inds));
 }
