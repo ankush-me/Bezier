@@ -15,3 +15,6 @@
 build/*
 *.cmake
 CMakeFiles/*
+
+*.cproject
+*.project
