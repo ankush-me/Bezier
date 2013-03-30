@@ -233,5 +233,22 @@ void BezierPatch::splitTriangle (vector<float> us, vector<float> vs, vector<unsi
 		splitTriangle(us1, vs1, inds1);
 		splitTriangle(us2, vs2, inds2);
 
-	} else adaptiveTriangles.push_back(Triangle(inds));
+	} else {
+		Triangle t = Triangle(inds);
+		vector<unsigned int> indos = t.indices;
+		adaptiveTriangles.push_back(t);
+		cout<<"\n\nStuff: \n    Pos: "<<endl;
+		cout<<"      "<<adaptiveSamples[indos[0]].pos.transpose()<<endl;
+		cout<<"      "<<adaptiveSamples[indos[1]].pos.transpose()<<endl;
+		cout<<"      "<<adaptiveSamples[indos[2]].pos.transpose()<<endl;
+		cout<<"    Normals: "<<endl;
+		cout<<"      "<<adaptiveSamples[indos[0]].normal.transpose()<<endl;
+		cout<<"      "<<adaptiveSamples[indos[1]].normal.transpose()<<endl;
+		cout<<"      "<<adaptiveSamples[indos[2]].normal.transpose()<<endl;
+		cout<<"    U's and V's: "<<endl;
+		cout<<"      "<<us[0]<<", "<<vs[0]<<endl;
+		cout<<"      "<<us[1]<<", "<<vs[1]<<endl;
+		cout<<"      "<<us[2]<<", "<<vs[2]<<endl;
+		cout<<"Size of adaptive triangles: "<<adaptiveTriangles.size()<<endl;
+	}
 }

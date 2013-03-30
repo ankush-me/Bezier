@@ -14,3 +14,9 @@ target_link_libraries(subdivision  ${OPENGL_LIBRARIES} ${GLUT_LIBRARY})
 # Test for parser
 add_executable(testParser tests/testParser.cpp
 						  BezierPatch.cpp)
+						  
+# General rendering test
+add_executable(testRender tests/testRender.cpp
+						  BezierPatch.cpp)
+target_link_libraries(testRender  ${OPENGL_LIBRARIES} ${GLUT_LIBRARY})
+						  
