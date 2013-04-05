@@ -87,7 +87,7 @@ Vector3f BezierPatch::surfaceEval2DNormal(const Matrix4f &matX, const Matrix4f &
 
 // Constructor
 BezierPatch::BezierPatch (const MatrixXf & _data, float _tolerance, float _step):
-																data(_data), step(_step), tolerance(_tolerance) {
+																		data(_data), step(_step), tolerance(_tolerance) {
 
 	assert(("BezierPatch did not get correct patch data. Expecting 4x12 matrix.",
 			data.rows()==4 && data.cols()==12));
@@ -162,7 +162,7 @@ void BezierPatch::adaptiveSample () {
 
 	float t1us[] = {0, 1, 1}, t2us[] = {0, 1, 0};
 	float t1vs[] = {0, 0, 1}, t2vs[] = {0, 1, 1};
-	int t1Inds[] = {0, 1, 2}, t2Inds[] = {2, 3, 0};
+	int t1Inds[] = {0, 1, 2}, t2Inds[] = {0, 2, 3};
 
 	VertexNormal v1(evalPoint(0, 0), evalNormal(0, 0));
 	VertexNormal v2(evalPoint(1, 0), evalNormal(1, 0));
@@ -222,11 +222,12 @@ void BezierPatch::checkAndSplit(const float us[3], const float vs[3],
 
 	int numSplit = (split12? 1:0) + (split23? 1:0) + (split31? 1:0);
 
-	if ( depth > 10 || !(split12 || split23 || split31)) {// good triangle keep it
+	//if ( depth > 10 || !(split12 || split23 || split31)) {// good triangle keep it
+	if (!(split12 || split23 || split31)) {// good triangle keep it
 		Triangle T(inds[0], inds[1], inds[2]);
 		adaptiveTriangles.push_back(T);
 		return;
-	}else if (numSplit == 1) { // split 1 edge:
+	} else if (numSplit == 1) { // split 1 edge:
 		Vector3f w , n;
 		unsigned int i1, i2, i3;
 		if (split12)      {i1=0; i2=1; i3=2; w = v12; n = n12;}
@@ -255,12 +256,12 @@ void BezierPatch::checkAndSplit(const float us[3], const float vs[3],
 		checkAndSplit(t2u, t2v, t2inds, depth+1);
 
 
-		} else if (numSplit == 2) { // split 2 edges:
+	} else if (numSplit == 2) { // split 2 edges:
 
 		Vector3f w1, n1, w2, n2;
 		int i1, i2, i3;
-		//if       (split12 && split23  && !split31) {i1=0; i2=1; i3=2; w1=v12; n1=n12; w2=v23; n2=n23;}
-		if (split23 && split31 && !split12)  {i1=1;  i2=2; i3=0; w1=v23; n1=n23; w2=v31; n2=n31;}
+		if       (split12 && split23  && !split31) {i1=0; i2=1; i3=2; w1=v12; n1=n12; w2=v23; n2=n23;}
+		else if (split23 && split31 && !split12)  {i1=1;  i2=2; i3=0; w1=v23; n1=n23; w2=v31; n2=n31;}
 		else if (split31 && split12 && !split23)  {i1 = 2;  i2 = 0; i3 = 1; w1 = v31; n1 = n31; w2 = v12; n2 = n12;}
 		else  {return; cout << "****************** NOONNEEE *************"<<endl; }
 
@@ -298,11 +299,11 @@ void BezierPatch::checkAndSplit(const float us[3], const float vs[3],
 		int   tt3inds[3] = {inds[i1], v4Ind, v5Ind};
 
 
-		//checkAndSplit(tt1u, tt1v, tt1inds, depth+1);
+		checkAndSplit(tt1u, tt1v, tt1inds, depth+1);
 		checkAndSplit(tt2u, tt2v, tt2inds, depth+1);
-		//checkAndSplit(tt3u, tt3v, tt3inds, depth+1);
+		checkAndSplit(tt3u, tt3v, tt3inds, depth+1);
 
-		} else if (numSplit == 3) { // split all edges edges:
+	} else if (numSplit == 3) { // split all edges edges:
 
 		// add the split vertices
 		VertexNormal vn1(v12, n12);
@@ -350,7 +351,7 @@ void BezierPatch::checkAndSplit(const float us[3], const float vs[3],
 		float t4v[] = {vs[2], v6, v5};
 		int t4inds[] = {inds[2], v6Ind, v5Ind};
 		checkAndSplit(t4u, t4v, t4inds, depth+1);
-}
+	}
 }
 
 /**
