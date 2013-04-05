@@ -151,30 +151,38 @@ void BezierPatch::sampleUniformly(){
     }
 }
 
-/** Adaptive tessellation -
+/** Adaptive tessellation
  * 	Recursively split into triangles until error is less that tolerance.
  * 	Error - distance between midpoints of triangles and points evaluated
  * 	at u,v of midpoint on curve. */
 void BezierPatch::adaptiveSample () {
 
-	vector<float> us1(3), vs1(3);
-	vector<float> us2(3), vs2(3);
-	vector<unsigned int> inds1(3), inds2(3);
-	us1[0] = 0.0; us1[1] = 1.0; us1[2] = 1.0;
-	vs1[0] = 0.0; vs1[1] = 1.0; vs1[2] = 0.0;
-	inds1[0] = 0; inds1[1] = 2; inds1[2] = 3;
-	us2[0] = 0.0; us2[1] = 0.0; us2[2] = 1.0;
-	vs2[0] = 0.0; vs2[1] = 1.0; vs2[2] = 1.0;
-	inds2[0] = 0; inds2[1] = 1; inds2[2] = 2;
+	float t1us[] = {0, 1, 1}, t2us[] = {0, 1, 0};
+	float t1vs[] = {0, 0, 1}, t2vs[] = {0, 1, 1};
+	unsigned int t1Inds[] = {0, 1, 2}, t2Inds[] = {0, 2, 3};
 
-	adaptiveSamples.push_back(VertexNormal(evalPoint(0.0, 0.0), evalNormal(0.0, 0.0)));
-	adaptiveSamples.push_back(VertexNormal(evalPoint(0.0, 1.0), evalNormal(0.0, 1.0)));
-	adaptiveSamples.push_back(VertexNormal(evalPoint(1.0, 1.0), evalNormal(1.0, 1.0)));
-	adaptiveSamples.push_back(VertexNormal(evalPoint(1.0, 0.0), evalNormal(1.0, 0.0)));
+	VertexNormal v1(evalPoint(0, 0), evalNormal(0, 0));
+	VertexNormal v2(evalPoint(1, 0), evalNormal(1, 0));
+	VertexNormal v3(evalPoint(1, 1), evalNormal(1, 1));
+	VertexNormal v4(evalPoint(0, 1), evalNormal(0, 1));
+	adaptiveSamples.push_back(v1);
+	adaptiveSamples.push_back(v2);
+	adaptiveSamples.push_back(v3);
+	adaptiveSamples.push_back(v4);
 
-	splitTriangle(us1, vs1, inds1);
-	splitTriangle(us2, vs2, inds2);
+	VertexNormalGL v1GL(v1);
+	VertexNormalGL v2GL(v2);
+	VertexNormalGL v3GL(v3);
+	VertexNormalGL v4GL(v4);
+	adaptiveSamplesGL.push_back(v1GL);
+	adaptiveSamplesGL.push_back(v2GL);
+	adaptiveSamplesGL.push_back(v3GL);
+	adaptiveSamplesGL.push_back(v4GL);
+
+	checkAndSplit(t1us, t1vs, t1Inds);
+	checkAndSplit(t2us, t2vs, t2Inds);
 }
+
 
 bool BezierPatch::shouldSplit(const Vector3f &p1,
 		const Vector3f & p2, const Vector3f &pt, float frac) {
