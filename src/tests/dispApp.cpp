@@ -255,7 +255,7 @@ int BuildPopupMenu (void) {
 int main(int argc, char** argv) {
 
 	// read and tesselate the bezier patches
-	string fname = EXPAND (PROJECT_DATA_DIR) "/teacup.bez";
+	string fname = EXPAND (PROJECT_DATA_DIR) "/teapot.bez";
 	cout << EXPAND(PROJECT_DATA_DIR) "/test.bez" <<endl;
 	patches = readPatches (fname);
 	for (int i = 0; i < patches.size(); i+=1 ) {

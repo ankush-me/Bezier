@@ -222,7 +222,7 @@ void BezierPatch::checkAndSplit(const float us[3], const float vs[3],
 
 	int numSplit = (split12? 1:0) + (split23? 1:0) + (split31? 1:0);
 
-	if ( depth > 5 || !(split12 || split23 || split31)) {// good triangle keep it
+	if ( depth > 10 || !(split12 || split23 || split31)) {// good triangle keep it
 		Triangle T(inds[0], inds[1], inds[2]);
 		adaptiveTriangles.push_back(T);
 		return;
@@ -255,7 +255,54 @@ void BezierPatch::checkAndSplit(const float us[3], const float vs[3],
 		checkAndSplit(t2u, t2v, t2inds, depth+1);
 
 
-	} else if (numSplit == 3) { // split all edges edges:
+		} else if (numSplit == 2) { // split 2 edges:
+
+		Vector3f w1, n1, w2, n2;
+		int i1, i2, i3;
+		//if       (split12 && split23  && !split31) {i1=0; i2=1; i3=2; w1=v12; n1=n12; w2=v23; n2=n23;}
+		if (split23 && split31 && !split12)  {i1=1;  i2=2; i3=0; w1=v23; n1=n23; w2=v31; n2=n31;}
+		else if (split31 && split12 && !split23)  {i1 = 2;  i2 = 0; i3 = 1; w1 = v31; n1 = n31; w2 = v12; n2 = n12;}
+		else  {return; cout << "****************** NOONNEEE *************"<<endl; }
+
+		// add the split vertices
+		VertexNormal vn1(w1, n1);
+		adaptiveSamples.push_back(vn1);
+		VertexNormalGL vnGL1(vn1);
+		adaptiveSamplesGL.push_back(vnGL1);
+
+		VertexNormal vn2(w2, n2);
+		adaptiveSamples.push_back(vn2);
+		VertexNormalGL vnGL2(vn2);
+		adaptiveSamplesGL.push_back(vnGL2);
+
+		const int numSamples = adaptiveSamples.size();
+
+		// calculate the new u,v, and sample index
+		float u4 = (0.5*us[i1] + 0.5*us[i2]), v4 = (0.5*vs[i1] + 0.5*vs[i2]);
+		int v4Ind = numSamples-2;
+
+		float u5= (0.5*us[i2] + 0.5*us[i3]), v5 = (0.5*vs[i2] + 0.5*vs[i3]);
+		int v5Ind = numSamples-1;
+
+		// make recursive calls
+		float tt1u[3] =  {us[i1], u5, us[i3]};
+		float tt1v[3] =  {vs[i1], v5, vs[i3]};
+		int tt1inds[3] = {inds[i1], v5Ind, inds[i3]};
+
+		float tt2u[3] =  {u5, u4, us[i2]};
+		float tt2v[3] =  {v5, v4, vs[i2]};
+		int tt2inds[3] = {v5Ind, v4Ind, inds[i2]};
+
+		float tt3u[3]  =  {us[i1], u4, u5};
+		float tt3v[3]  =  {vs[i1], v4, v5};
+		int   tt3inds[3] = {inds[i1], v4Ind, v5Ind};
+
+
+		//checkAndSplit(tt1u, tt1v, tt1inds, depth+1);
+		checkAndSplit(tt2u, tt2v, tt2inds, depth+1);
+		//checkAndSplit(tt3u, tt3v, tt3inds, depth+1);
+
+		} else if (numSplit == 3) { // split all edges edges:
 
 		// add the split vertices
 		VertexNormal vn1(v12, n12);
@@ -303,52 +350,7 @@ void BezierPatch::checkAndSplit(const float us[3], const float vs[3],
 		float t4v[] = {vs[2], v6, v5};
 		int t4inds[] = {inds[2], v6Ind, v5Ind};
 		checkAndSplit(t4u, t4v, t4inds, depth+1);
-	} else if (numSplit == 2) { // split 2 edges:
-
-		Vector3f w1, n1, w2, n2;
-		int i1, i2, i3;
-		if      (split12 && split23  && !split31) {i1=0; i2=1; i3=2; w1=v12; n1=n12; w2=v23; n2=n23;}
-		else if (split23 && split31 && !split12) {i1 = 1; i2 = 2; i3 = 0; w1=v23; n1=n23; w2=v31; n2=n31;}
-		else if (split31 && split12 && !split23) {i1 = 2; i2 = 0; i3 = 1; w1=v31; n1=n31; v2=v12; n2=n12;}
-		else  {cout << "****************** NOONNEEE *************"<<endl;}
-
-		// add the split vertices
-		VertexNormal vn1(w1, n1);
-		adaptiveSamples.push_back(vn1);
-		VertexNormalGL vnGL1(vn1);
-		adaptiveSamplesGL.push_back(vnGL1);
-
-		VertexNormal vn2(w2, n2);
-		adaptiveSamples.push_back(vn2);
-		VertexNormalGL vnGL2(vn2);
-		adaptiveSamplesGL.push_back(vnGL2);
-
-
-		// calculate the new u,v, and sample index
-		float u4 = (us[i1] + us[i2])/2.0, v4 = (vs[i1] + vs[i2])/2.0;
-		int v4Ind = adaptiveSamples.size()-2;
-
-		float u5= (us[i2] + us[i3])/2.0, v5 = (vs[i2] + vs[i3])/2.0;
-		int v5Ind = adaptiveSamples.size()-1;
-
-
-		// make recursive calls
-		float t1u[3] = {us[i1], u5, us[i3]};
-		float t1v[3] = {vs[i1], v5, vs[i3]};
-		int t1inds[3] = {inds[i1], v5Ind, inds[i3]};
-		checkAndSplit(t1u, t1v, t1inds, depth+1);
-
-		float t2u[3] = {us[i1], u4, u5};
-		float t2v[3] = {vs[i1], v4, v5};
-		int t2inds[3] = {inds[i1], v4Ind, v5Ind};
-		checkAndSplit(t2u, t2v, t2inds, depth+1);
-
-		float t3u[3] = {u4, us[i2], u5};
-		float t3v[3] = {v4, vs[i2], v5};
-		int t3inds[3] = {v4Ind, inds[i2], v5Ind};
-		checkAndSplit(t3u, t3v, t3inds, depth+1);
-	}
-
+}
 }
 
 /**

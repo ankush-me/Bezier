@@ -40,7 +40,7 @@ struct VertexNormalGL {
 	float normal[3];
 
 	VertexNormalGL (const VertexNormal & vn) {
-		pos[0] = vn.pos.x(); pos[1] = vn.pos.y(); pos[2] = vn.pos.z();
+		pos[0] = (float) vn.pos.x(); pos[1] =  (float) vn.pos.y(); pos[2] = (float)vn.pos.z();
 		normal[0] = vn.normal.x(); normal[1] = vn.normal.y(); normal[2] = vn.normal.z();
 	}
 };
