@@ -82,7 +82,7 @@ void RenderObjects(void) {
 
 	//glutSolidTeapot(0.3);
 	for (int i = 0; i < patches.size(); i+= 1) {
-		patches[i].drawPatchSimple(true);
+		patches[i].drawPatchSimple(false);
 	}
 
 	glPopMatrix();
@@ -255,11 +255,12 @@ int BuildPopupMenu (void) {
 int main(int argc, char** argv) {
 
 	// read and tesselate the bezier patches
-	string fname = EXPAND (PROJECT_DATA_DIR) "/teapot.bez";
+	string fname = EXPAND (PROJECT_DATA_DIR) "/teacup.bez";
 	cout << EXPAND(PROJECT_DATA_DIR) "/test.bez" <<endl;
 	patches = readPatches (fname);
 	for (int i = 0; i < patches.size(); i+=1 ) {
-		patches[i].sampleUniformly();
+		//patches[i].sampleUniformly();
+		patches[i].adaptiveSample();
 	}
 
 

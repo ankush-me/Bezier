@@ -40,8 +40,8 @@ struct VertexNormalGL {
 	float normal[3];
 
 	VertexNormalGL (const VertexNormal & vn) {
-		pos[0] = vn.pos.x(); pos[0] = vn.pos.y(); pos[0] = vn.pos.z();
-		normal[0] = vn.normal.x(); normal[0] = vn.normal.y(); normal[0] = vn.normal.z();
+		pos[0] = vn.pos.x(); pos[1] = vn.pos.y(); pos[2] = vn.pos.z();
+		normal[0] = vn.normal.x(); normal[1] = vn.normal.y(); normal[2] = vn.normal.z();
 	}
 };
 
@@ -126,7 +126,7 @@ class BezierPatch {
 			           const Vector3f &pt, float frac = 0.5);
 
 	void checkAndSplit(const float us[], const float vs[],
-            const unsigned int inds[]);
+            const int inds[], int depth);
 
 public:
 
