@@ -107,44 +107,57 @@ Vector3f BezierPatch::evalNormal (float u, float v) {
 	return surfaceEval2DNormal (matX, matY, matZ, u, v);
 }
 
+void getXY(int i, const int N, int &x, int &y) {
+	x = (int) i/N;
+	y = (int) i % N;
+}
+
+int serializeIndex(const int i, const int j, const int N) {
+	return i*N+j;
+}
+
 /** Sample the bezier patch uniformly with STEP.*/
 void BezierPatch::sampleUniformly(){
 	uniformSamples.clear();
-	float u = 0.0;
-	while (u < 1.0) {
-		float v = 0.0;
-		while (v < 0.0) {
-			VertexNormal vn (surfaceEval2D(matX, matY, matZ, u,v),
-					surfaceEval2DNormal(matX, matY, matZ, u,v));
-			uniformSamples.push_back(vn);
-			v += step;
-		}
-		v = 1.f;
-		VertexNormal vn (surfaceEval2D(matX, matY, matZ, u,v),
-				surfaceEval2DNormal(matX, matY, matZ, u,v));
-		uniformSamples.push_back(vn);
-		u += step;
-	}
 
-	u = 1.0f;
-	float v = 0.0;
-	while (v < 0.0) {
-		VertexNormal vn (surfaceEval2D(matX, matY, matZ, u,v),
-				surfaceEval2DNormal(matX, matY, matZ, u,v));
-		uniformSamples.push_back(vn);
-		v += step;
-	}
-	v = 1.f;
-	VertexNormal vn (surfaceEval2D(matX, matY, matZ, u,v),
-			surfaceEval2DNormal(matX, matY, matZ, u,v));
-	uniformSamples.push_back(vn);
+	const int M = (int) ceil(1.0/step) - 1;
+	vector<float> step_points;
+	int i = 0;
+    while (i <= M) {
+        step_points.push_back(i*step);
+        i += 1;
+    }
+    step_points.push_back(1.0);
+    const int num_points = step_points.size();
+
+    // sample the bezier patch
+    for (int ui = 0; ui < num_points; ui +=1) {
+    	for (int vi = 0; vi < num_points; vi +=1) {
+    		VertexNormal vn (surfaceEval2D(matX, matY, matZ, step_points[ui], step_points[vi]),
+    				         surfaceEval2DNormal(matX, matY, matZ, step_points[ui], step_points[vi]));
+    		uniformSamples.push_back(vn);
+    	}
+    }
+
+	// now form triangles out of the sampled points.
+    uniformTriangles.clear();
+    for (int ui = 0; ui < num_points -1; ui += 1) {
+    	for (int vi = 0; vi < num_points -1; vi +=1) {
+    		const int v1 = serializeIndex(ui,   vi,   num_points);
+    		const int v2 = serializeIndex(ui+1, vi,   num_points);
+    		const int v3 = serializeIndex(ui+1, vi+1, num_points);
+    		const int v4 = serializeIndex(ui,   vi+1, num_points);
+
+    		uniformTriangles.push_back(Triangle(v1, v2, v3));
+    		uniformTriangles.push_back(Triangle(v1, v3, v4));
+    	}
+    }
 }
 
 /** Adaptive tessellation -
  * 	Recursively split into triangles until error is less that tolerance.
  * 	Error - distance between midpoints of triangles and points evaluated
- * 	at u,v of midpoint on curve.
- * 	 */
+ * 	at u,v of midpoint on curve. */
 void BezierPatch::adaptiveSample () {
 
 	vector<float> us1(3), vs1(3);
@@ -164,7 +177,6 @@ void BezierPatch::adaptiveSample () {
 
 	splitTriangle(us1, vs1, inds1);
 	splitTriangle(us2, vs2, inds2);
-
 }
 
 /**

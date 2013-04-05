@@ -50,7 +50,7 @@ class BezierPatch {
 		Triangle (const int i0, const int i1, const int i2) : indices (3) {
 			indices[0] = i0; indices[1] = i1; indices[2] = i2;
 		}
-		Triangle (const vector<unsigned int> inds) : indices (3) {
+		Triangle (const vector<unsigned int> &inds) : indices (3) {
 			indices[0] = inds[0]; indices[1] = inds[1]; indices[2] = inds[2];
 		}
 	};

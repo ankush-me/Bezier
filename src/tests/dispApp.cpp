@@ -172,32 +172,33 @@ void KeyBoardArrows (int key, int x, int y) {
 	case GLUT_KEY_LEFT:
 		if (glutGetModifiers() == GLUT_ACTIVE_SHIFT) { // translate
 			g_transX -= 0.1;
-		} else { // rotate
+		} else {           // rotate
 			g_angleY-= 5;
 		}
 		break;
 	case GLUT_KEY_RIGHT:
 		if (glutGetModifiers() == GLUT_ACTIVE_SHIFT) { // translate
 			g_transX += 0.1;
-		} else { // rotate
+		} else {           // rotate
 			g_angleY += 5;
 		}
 		break;
 	case GLUT_KEY_UP:
 		if (glutGetModifiers() == GLUT_ACTIVE_SHIFT) { // translate
 			g_transY += 0.1;
-		} else { // rotate
+		} else {            // rotate
 			g_angleX += 5;
 		}
 		break;
 	case GLUT_KEY_DOWN:
 		if (glutGetModifiers() == GLUT_ACTIVE_SHIFT) { // translate
 			g_transY -= 0.1;
-		} else { // rotate
+		} else {            // rotate
 			g_angleX -= 5;
 		}
 		break;
 	}
+	glutPostRedisplay();
 }
 
 
