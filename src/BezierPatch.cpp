@@ -176,6 +176,112 @@ void BezierPatch::adaptiveSample () {
 	splitTriangle(us2, vs2, inds2);
 }
 
+bool BezierPatch::shouldSplit(const Vector3f &p1,
+		const Vector3f & p2, const Vector3f &pt, float frac) {
+	return (frac*p1 + (1-frac)*p2 - pt).norm() > tolerance;
+}
+
+
+void BezierPatch::checkAndSplit(const float us[], const float vs[],
+		                             const unsigned int inds[]) {
+
+	Vector3f v1 =  adaptiveSamples(inds[0]);
+	Vector3f v2 =  adaptiveSamples(inds[1]);
+	Vector3f v3 =  adaptiveSamples(inds[2]);
+
+	Vector3f v12 =  evalPoint((us[0] + us[1])/2.0, (vs[0] + vs[1])/2.0);
+	Vector3f v23 =  evalPoint((us[1] + us[2])/2.0, (vs[1] + vs[2])/2.0);
+	Vector3f v31 =  evalPoint((us[2] + us[0])/2.0, (vs[2] + vs[0])/2.0);
+	Vector3f n12 =  evalNormal((us[0] + us[1])/2.0, (vs[0] + vs[1])/2.0);
+	Vector3f n23 =  evalNormal((us[1] + us[2])/2.0, (vs[1] + vs[2])/2.0);
+	Vector3f n31 =  evalNormal((us[2] + us[0])/2.0, (vs[2] + vs[0])/2.0);
+
+	bool split12 = shouldSplit(v1, v2, v12);
+	bool split23 = shouldSplit(v2, v3, v23);
+	bool split31 = shouldSplit(v3, v1, v31);
+
+	int numSplit = (split12? 1:0) + (split23? 1:0) + (split31? 1:0);
+
+	if (!(split12 || split23 || split31)) {// good triangle keep it
+		Triangle T(inds[0], inds[1], inds[2]);
+		adaptiveTriangles.push_back(T);
+		return;
+	} if (numSplit == 1) { // split 1 edge:
+		const Vector3f &w , &n;
+		const unsigned int i1, i2, i3;
+		if (split12)      {i1=0; i2=1; i3=2; w = v12; n = n12;}
+		else if (split23) {i1 = 1; i2 = 2; i3 = 0; w = v23; n = n23;}
+		else if (split31) {i1 = 2; i2 = 0; i3 = 1; w = v31; n = n31;}
+
+		// add the split vertex
+		VertexNormal vn(w, n);
+		adaptiveSamples.push_back(vn);
+		VertexNormalGL vnGL(vn);
+		adaptiveSamplesGL.push_back(vnGL);
+
+		// calculate the new u,v, and sample index
+		float u4 = (us[i1] + us[i2])/2.0, v4 = (vs[i1] + vs[i2])/2.0;
+		unsigned int v4Ind = adaptiveSamples.size()-1;
+
+		// make recursive calls
+		float t1u[] = {us[i1], u4, us[i3]};
+		float t1v[] = {vs[i1], v4, vs[i3]};
+		unsigned int t1inds[] = {inds[i1], v4Ind, inds[i3]};
+		checkAndSplit(t1u, t1v, t1inds);
+
+		float t2u[] = {u4, us[i2], us[i3]};
+		float t2v[] = {v4, vs[i2], vs[i3]};
+		unsigned int t2inds[] = {v4Ind, inds[i2], inds[i3]};
+		checkAndSplit(t2u, t2v, t2inds);
+
+	}else if (numSplit == 2) { // split 2 edges:
+
+		const Vector3f &w1, &n1, &w2, &n2;
+		const unsigned int i1, i2, i3;
+		if      (split12?1:0 + split23?1:0 == 2) {i1=0; i2=1; i3=2; w1=v12; n1=n12; w2=23; n2=n23;}
+		else if (split23?1:0 + split31?1:0 ==2) {i1 = 1; i2 = 2; i3 = 0; w1=v23; n1=n23; w2=v31; n2=n31;}
+		else if (split31?1:0 + split12?1:0 ==2) {i1 = 2; i2 = 0; i3 = 1; w1=v31; n1=n31; v2=v12; n2=n12;}
+
+		// add the split vertices
+		VertexNormal vn1(w1, n1);
+		adaptiveSamples.push_back(vn1);
+		VertexNormalGL vnGL1(vn1);
+		adaptiveSamplesGL.push_back(vnGL1);
+
+		VertexNormal vn2(w2, n2);
+		adaptiveSamples.push_back(vn2);
+		VertexNormalGL vnGL2(vn2);
+		adaptiveSamplesGL.push_back(vnGL2);
+
+
+		// calculate the new u,v, and sample index
+		float u4 = (us[i1] + us[i2])/2.0, v4 = (vs[i1] + vs[i2])/2.0;
+		unsigned int v4Ind = adaptiveSamples.size()-2;
+
+		float u5= (us[i2] + us[i3])/2.0, v5 = (vs[i2] + vs[i3])/2.0;
+		unsigned int v5Ind = adaptiveSamples.size()-1;
+
+		// make recursive calls
+		float t1u[] = {us[i1], u4, us[i3]};
+		float t1v[] = {vs[i1], v4, vs[i3]};
+		unsigned int t1inds[] = {inds[i1], v4Ind, inds[i3]};
+		checkAndSplit(t1u, t1v, t1inds);
+
+		float t2u[] = {us[i3], u4, u5};
+		float t2v[] = {vs[i3], v4, v5};
+		unsigned int t2inds[] = {inds[i3], v4Ind, v5Ind};
+		checkAndSplit(t2u, t2v, t2inds);
+
+		float t3u[] = {u5, u4, us[i2]};
+		float t3v[] = {v5, v4, vs[i2]};
+		unsigned int t3inds[] = {v5Ind, v4Ind, inds[i2]};
+		checkAndSplit(t3u, t3v, t3inds);
+	}
+
+}
+
+
+
 /**
  * Splits triangle described by us and vs, only if error is greater than threshold.
  * TODO: Might want to change order of inserting into us, vs so as to make triangulation
@@ -310,6 +416,7 @@ void BezierPatch::drawPatchSimple(bool drawUniform) {
 		VertexNormalGL v3 = verts->at(T.indices[2]);
 
 		glBegin(GL_TRIANGLES);
+
 		glNormal3f(v1.normal[0], v1.normal[1], v1.normal[2]);
 		glVertex3f(v1.pos[0], v1.pos[1], v1.pos[2]);
 
@@ -318,8 +425,6 @@ void BezierPatch::drawPatchSimple(bool drawUniform) {
 
 		glNormal3f(v3.normal[0], v3.normal[1], v3.normal[2]);
 		glVertex3f(v3.pos[0], v3.pos[1], v3.pos[2]);
-
-
 
 		glEnd();
 	}

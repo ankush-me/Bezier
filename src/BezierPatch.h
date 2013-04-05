@@ -38,6 +38,11 @@ struct VertexNormal {
 struct VertexNormalGL {
 	float pos[3];
 	float normal[3];
+
+	VertexNormalGL (const VertexNormal & vn) {
+		pos[0] = vn.pos.x(); pos[0] = vn.pos.y(); pos[0] = vn.pos.z();
+		normal[0] = vn.normal.x(); normal[0] = vn.normal.y(); normal[0] = vn.normal.z();
+	}
 };
 
 /* Class to represent a Bezier Patch: Defined by 16 control points.*/
@@ -116,6 +121,12 @@ class BezierPatch {
 	/* Evaluates the normal at a point pt(u,v) of a Bezier SURFACE. */
 	static Vector3f surfaceEval2DNormal(const Matrix4f &matX, const Matrix4f &matY, const Matrix4f &matZ,
 			float u, float v);
+
+	bool shouldSplit(const Vector3f &p1, const Vector3f & p2,
+			           const Vector3f &pt, float frac = 0.5);
+
+	void checkAndSplit(const float us[], const float vs[],
+            const unsigned int inds[]);
 
 public:
 
