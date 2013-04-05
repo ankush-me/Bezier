@@ -57,7 +57,7 @@ readPatches(std::string fname) {
 
 			if (row == 4) { // start a new patch
 				row = 0;
-				BezierPatch patch(*mat);
+				BezierPatch patch(*mat,0.1,0.1);
 				patches.push_back(patch);
 				mat = new MatrixXf(4,12);
 			}

@@ -10,7 +10,7 @@
 const Matrix4f BezierPatch::BezierBasis = (Matrix4f() << 1.f,  0.f,  0.f,  0.f,
 														 -3.f,  3.f,  0.f,  0.f,
 														  3.f, -6.f,  3.f,  0.f,
-														  -1.f,  3.f,  -3.f, 1.f). finished();
+										   			     -1.f,  3.f,  -3.f, 1.f). finished();
 
 const Matrix4f BezierPatch::BezierBasisTranspose = BezierPatch::BezierBasis.transpose();
 
@@ -80,7 +80,7 @@ Vector3f BezierPatch::surfaceEval2DNormal(const Matrix4f &matX, const Matrix4f &
 		float u, float v) {
 	Vector3f tangentU =  surfaceEval2DTangentU(matX, matY, matZ, u, v);
 	Vector3f tangentV =  surfaceEval2DTangentV	(matX, matY, matZ, u, v);
-	return (tangentU.cross(tangentV)).normalized();
+	return (tangentV.cross(tangentU)).normalized();
 }
 
 
@@ -310,9 +310,17 @@ void BezierPatch::drawPatchSimple(bool drawUniform) {
 		VertexNormalGL v3 = verts->at(T.indices[2]);
 
 		glBegin(GL_TRIANGLES);
+		glNormal3f(v1.normal[0], v1.normal[1], v1.normal[2]);
 		glVertex3f(v1.pos[0], v1.pos[1], v1.pos[2]);
+
+		glNormal3f(v2.normal[0], v2.normal[1], v2.normal[2]);
 		glVertex3f(v2.pos[0], v2.pos[1], v2.pos[2]);
+
+		glNormal3f(v3.normal[0], v3.normal[1], v3.normal[2]);
 		glVertex3f(v3.pos[0], v3.pos[1], v3.pos[2]);
+
+
+
 		glEnd();
 	}
 }

@@ -123,6 +123,7 @@ void InitGraphics(void) {
 	glShadeModel(GL_SMOOTH);
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
+	//glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
 }
 
 void MouseButton(int button, int state, int x, int y) {
@@ -254,7 +255,7 @@ int BuildPopupMenu (void) {
 int main(int argc, char** argv) {
 
 	// read and tesselate the bezier patches
-	string fname = EXPAND (PROJECT_DATA_DIR) "/test.bez";
+	string fname = EXPAND (PROJECT_DATA_DIR) "/teapot.bez";
 	cout << EXPAND(PROJECT_DATA_DIR) "/test.bez" <<endl;
 	patches = readPatches (fname);
 	for (int i = 0; i < patches.size(); i+=1 ) {
