@@ -25,15 +25,16 @@ enum {
 	MENU_LIGHTING = 1,
 	MENU_POLYMODE,
 	MENU_TEXTURING,
+	MENU_SHADING,
 	MENU_EXIT
 };
 
 typedef int BOOL;
-#define TRUE 1
+#define TRUE  1
 #define FALSE 0
 static BOOL g_bLightingEnabled = TRUE;
 static BOOL g_bFillPolygons    = TRUE;
-static BOOL g_bTexture         = FALSE;
+static BOOL g_bSmoothShading   = TRUE;
 static BOOL g_bButton1Down     = FALSE;
 static GLfloat g_fTeapotAngle  = 0.0;
 static GLfloat g_fTeapotAngle2 = 0.0;
@@ -46,17 +47,15 @@ static int g_Height           = 600;                         // Initial window h
 static int g_yClick            = 0;
 static float g_lightPos[4] = { 10, 10, -100, 1 };  // Position of light
 
-void RenderObjects(void)
-{
-	float colorBronzeDiff[4] = { 0.8, 0.6, 0.0, 1.0 };
-	float colorBronzeSpec[4] = { 1.0, 1.0, 0.4, 1.0 };
-	float colorBlue[4]       = { 0.0, 0.2, 1.0, 1.0 };
-	float colorNone[4]       = { 0.0, 0.0, 0.0, 0.0 };
-	glMatrixMode(GL_MODELVIEW);
+const float colorBronzeDiff[4] = { 0.8, 0.6, 0.0, 1.0 };
+const float colorBronzeSpec[4] = { 1.0, 1.0, 0.4, 1.0 };
+const float colorBlue[4]       = { 0.0, 0.2, 1.0, 1.0 };
+const float colorNone[4]       = { 0.0, 0.0, 0.0, 0.0 };
+
+void RenderObjects(void) {
+	glMatrixMode(GL_MODELVIEW);  // edit the model view matrix
 	glPushMatrix();
-	// Main object (cube) ... transform to its coordinates, and render
-	glColor4fv(colorBlue);
-	// glBindTexture(GL_TEXTURE_2D, TEXTURE_ID_CUBE);
+
 	// Child object (teapot) ... relative transform, and render
 	glTranslatef(0, 0, -7.5);
 	glRotatef(g_fTeapotAngle2, 1, 1, 0);
@@ -64,15 +63,16 @@ void RenderObjects(void)
 	glMaterialfv(GL_FRONT, GL_SPECULAR, colorBronzeSpec);
 	glMaterialf(GL_FRONT, GL_SHININESS, 50.0);
 	glColor4fv(colorBronzeDiff);
-	// glBindTexture(GL_TEXTURE_2D, 0);
+
 	glutSolidTeapot(0.3);
+
 	glPopMatrix();
 }
 
-void display(void)
-{
+void display(void) {
 	// Clear frame buffer and depth buffer
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 	// Set up viewing transformation, looking down -Z axis
 	glLoadIdentity();
 	gluLookAt(0, 0, -g_fViewDistance, 0, 0, -1, 0, 1, 0);
@@ -86,22 +86,19 @@ void display(void)
 	glutSwapBuffers();
 }
 
-void reshape(GLint width, GLint height)
-{
+void reshape(GLint width, GLint height) {
 	g_Width = width;
 	g_Height = height;
 	glViewport(0, 0, g_Width, g_Height);
-	glMatrixMode(GL_PROJECTION);
+	glMatrixMode(GL_PROJECTION);    // edit the projection matrix
 	glLoadIdentity();
 	gluPerspective(65.0, (float)g_Width / g_Height, g_nearPlane, g_farPlane);
 	glMatrixMode(GL_MODELVIEW);
 }
 
-void InitGraphics(void)
-{
+void InitGraphics(void) {
 	int width, height;
 	int nComponents;
-	//void* pTextureImage;
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 	glShadeModel(GL_SMOOTH);
@@ -121,8 +118,7 @@ void MouseButton(int button, int state, int x, int y)
 	}
 }
 
-void MouseMotion(int x, int y)
-{
+void MouseMotion(int x, int y) {
 	// If button1 pressed, zoom in/out if mouse is moved up/down.
 	if (g_bButton1Down)
 	{
@@ -134,15 +130,12 @@ void MouseMotion(int x, int y)
 	}
 }
 
-void AnimateScene(void)
-{
+void AnimateScene(void) {
 	glutPostRedisplay();
 }
 
-void SelectFromMenu(int idCommand)
-{
-	switch (idCommand)
-	{
+void SelectFromMenu(int idCommand) {
+	switch (idCommand) {
 	case MENU_LIGHTING:
 		g_bLightingEnabled = !g_bLightingEnabled;
 		if (g_bLightingEnabled)
@@ -154,6 +147,10 @@ void SelectFromMenu(int idCommand)
 		g_bFillPolygons = !g_bFillPolygons;
 		glPolygonMode (GL_FRONT_AND_BACK, g_bFillPolygons ? GL_FILL : GL_LINE);
 		break;
+	case MENU_SHADING:
+			g_bSmoothShading = !g_bSmoothShading;
+			glShadeModel(g_bSmoothShading? GL_SMOOTH : GL_FLAT);
+			break;
 	case MENU_EXIT:
 		exit (0);
 		break;
@@ -162,11 +159,9 @@ void SelectFromMenu(int idCommand)
 	glutPostRedisplay();
 }
 
-void Keyboard(unsigned char key, int x, int y)
-{
-	switch (key)
-	{
-	case 27:             // ESCAPE key
+void Keyboard(unsigned char key, int x, int y) {
+	switch (key) {
+	case 27:  // ESCAPE
 		exit (0);
 		break;
 	case 'l':
@@ -175,29 +170,33 @@ void Keyboard(unsigned char key, int x, int y)
 	case 'w':
 		SelectFromMenu(MENU_POLYMODE);
 		break;
+	case 's':
+		SelectFromMenu(MENU_SHADING);
+		break;
 	}
 }
 
-int BuildPopupMenu (void)
-{
+int BuildPopupMenu (void) {
 	int menu;
 	menu = glutCreateMenu (SelectFromMenu);
-	glutAddMenuEntry ("Toggle lighting\tl", MENU_LIGHTING);
+	glutAddMenuEntry ("Toggle lighting\tl",     MENU_LIGHTING);
 	glutAddMenuEntry ("Toggle polygon fill\tp", MENU_POLYMODE);
-	//glutAddMenuEntry ("Toggle texturing\tt", MENU_TEXTURING);
+	glutAddMenuEntry ("Toggle flat/smooth shading\tp", MENU_SHADING);
 	glutAddMenuEntry ("Exit demo\tEsc", MENU_EXIT);
 	return menu;
 }
 
-int main(int argc, char** argv)
-{
+
+int main(int argc, char** argv) {
 	// GLUT Window Initialization:
 	glutInit (&argc, argv);
 	glutInitWindowSize (g_Width, g_Height);
 	glutInitDisplayMode ( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
-	glutCreateWindow ("CS248 GLUT example");
+	glutCreateWindow ("CS184  - Bezier Subdivision");
+
 	// Initialize OpenGL graphics state
 	InitGraphics();
+
 	// Register callbacks:
 	glutDisplayFunc (display);
 	glutReshapeFunc (reshape);
@@ -205,9 +204,11 @@ int main(int argc, char** argv)
 	glutMouseFunc (MouseButton);
 	glutMotionFunc (MouseMotion);
 	glutIdleFunc (AnimateScene);
+
 	// Create our popup menu
 	BuildPopupMenu ();
-	//glutAttachMenu (GLUT_RIGHT_BUTTON);
+	glutAttachMenu (GLUT_RIGHT_BUTTON);
+
 	// Turn the flow of control over to GLUT
 	glutMainLoop ();
 	return 0;

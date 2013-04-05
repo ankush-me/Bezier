@@ -6,12 +6,26 @@
 #include <iostream>
 #include <fstream>
 #include "Eigen/Dense"
+#include "Eigen/StdVector"
 
 using namespace Eigen;
 using namespace std;
 
+
+
+/************************************************************
+ * Please make sure that whenever a vector of a class       *
+ * which has an object of eigen inside it is defined        *
+ * the allocator is also specified (as below).              *
+ *                                                          *
+ * Also include #include <Eigen/StdVector>   				*
+ * 															*
+ ************************************************************/
+
+
 // vertex which stores position and normal
 struct VertexNormal {
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	Vector3f pos;
 	Vector3f normal;
 	VertexNormal (const Vector3f &_pos, const Vector3f & _normal) : pos(_pos), normal(_normal) {}
@@ -19,6 +33,7 @@ struct VertexNormal {
 
 /* Class to represent a Bezier Patch: Defined by 16 control points.*/
 class BezierPatch {
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 	static const Matrix4f BezierBasis;
 	static const Matrix4f BezierBasisTranspose;
@@ -94,6 +109,7 @@ class BezierPatch {
 			float u, float v);
 
 public:
+
 	vector<VertexNormal> uniformSamples;  // vertices found using uniform samples
 	vector<VertexNormal> adaptiveSamples; // vertices found using adaptive sampling
 
@@ -111,7 +127,6 @@ public:
 
 	/** Sample the bezier patch uniformly with STEP.*/
 	void sampleUniformly();
-
 
 	void adaptiveSample();
 	void splitTriangle (vector<float> us, vector<float> vs, vector<unsigned int> inds);

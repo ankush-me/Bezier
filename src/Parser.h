@@ -2,10 +2,23 @@
 #define __PARSER__
 
 #include "BezierPatch.h"
+#include "Eigen/StdVector"
+
+
+
+	/************************************************************
+	 * Please make sure that whenever a vector of a class       *
+	 * which has an object of eigen inside it is defined        *
+	 * the allocator is also specified (as below).              *
+	 *                                                          *
+	 * Also include #include <Eigen/StdVector>   				*
+	 * 															*
+	 ************************************************************/
 
 /** Reads a .bez file. */
-vector<BezierPatch> readPatches(std::string fname) {
-	vector <BezierPatch> patches;
+vector<BezierPatch, Eigen::aligned_allocator<BezierPatch> >
+readPatches(std::string fname) {
+	vector <BezierPatch, Eigen::aligned_allocator<BezierPatch> > patches;
 	int num_patches   = -1;
 	bool readNum      = false;
 

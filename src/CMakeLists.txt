@@ -19,4 +19,9 @@ add_executable(testParser tests/testParser.cpp
 add_executable(testRender tests/testRender.cpp
 						  BezierPatch.cpp)
 target_link_libraries(testRender  ${OPENGL_LIBRARIES} ${GLUT_LIBRARY})
+
+# build the app which integrates openGL + subdivision
+add_executable(dispApp tests/dispApp.cpp
+						  BezierPatch.cpp)
+target_link_libraries(dispApp  ${OPENGL_LIBRARIES} ${GLUT_LIBRARY})
 						  
