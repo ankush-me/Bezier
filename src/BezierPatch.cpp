@@ -234,7 +234,7 @@ void BezierPatch::checkAndSplit(const float us[], const float vs[],
 		unsigned int t2inds[] = {v4Ind, inds[i2], inds[i3]};
 		checkAndSplit(t2u, t2v, t2inds);
 
-	}else if (numSplit == 2) { // split 2 edges:
+	} else if (numSplit == 2) { // split 2 edges:
 
 		const Vector3f &w1, &n1, &w2, &n2;
 		const unsigned int i1, i2, i3;
@@ -252,7 +252,6 @@ void BezierPatch::checkAndSplit(const float us[], const float vs[],
 		adaptiveSamples.push_back(vn2);
 		VertexNormalGL vnGL2(vn2);
 		adaptiveSamplesGL.push_back(vnGL2);
-
 
 		// calculate the new u,v, and sample index
 		float u4 = (us[i1] + us[i2])/2.0, v4 = (vs[i1] + vs[i2])/2.0;
@@ -276,8 +275,56 @@ void BezierPatch::checkAndSplit(const float us[], const float vs[],
 		float t3v[] = {v5, v4, vs[i2]};
 		unsigned int t3inds[] = {v5Ind, v4Ind, inds[i2]};
 		checkAndSplit(t3u, t3v, t3inds);
-	}
 
+	} else if (numSplit == 3) { // split all edges edges:
+
+		// add the split vertices
+		VertexNormal vn1(v12, n12);
+		adaptiveSamples.push_back(vn1);
+		VertexNormalGL vnGL1(vn1);
+		adaptiveSamplesGL.push_back(vnGL1);
+
+		VertexNormal vn2(v23, n23);
+		adaptiveSamples.push_back(vn2);
+		VertexNormalGL vnGL2(vn2);
+		adaptiveSamplesGL.push_back(vnGL2);
+
+		VertexNormal vn3(v31, n31);
+		adaptiveSamples.push_back(vn3);
+		VertexNormalGL vnGL3(vn3);
+		adaptiveSamplesGL.push_back(vnGL3);
+
+		// calculate the new u,v, and sample index
+		float u4 = (us[0] + us[1])/2.0, v4 = (vs[0] + vs[1])/2.0;
+		unsigned int v4Ind = adaptiveSamples.size()-3;
+
+		float u5= (us[1] + us[2])/2.0, v5 = (vs[1] + vs[2])/2.0;
+		unsigned int v5Ind = adaptiveSamples.size()-2;
+
+		float u6= (us[2] + us[0])/2.0, v6 = (vs[2] + vs[0])/2.0;
+		unsigned int v6Ind = adaptiveSamples.size()-1;
+
+		// make recursive calls
+		float t1u[] = {us[0], u4, u6};
+		float t1v[] = {vs[0], v4, v6};
+		unsigned int t1inds[] = {inds[0], v4Ind, v6Ind};
+		checkAndSplit(t1u, t1v, t1inds);
+
+		float t2u[] = {u6, u4, u5};
+		float t2v[] = {v6, v4, v5};
+		unsigned int t2inds[] = {v6Ind, v4Ind, v5Ind};
+		checkAndSplit(t2u, t2v, t2inds);
+
+		float t3u[] = {u5, u4, us[1]};
+		float t3v[] = {v5, v4, vs[1]};
+		unsigned int t3inds[] = {v5Ind, v4Ind, inds[1]};
+		checkAndSplit(t3u, t3v, t3inds);
+
+		float t4u[] = {us[2], u6, u5};
+		float t4v[] = {vs[2], v6, v5};
+		unsigned int t4inds[] = {inds[2], v6Ind, v5Ind};
+		checkAndSplit(t4u, t4v, t4inds);
+	}
 }
 
 
