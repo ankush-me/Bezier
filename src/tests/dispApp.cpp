@@ -1,46 +1,20 @@
-// glut_example.c
+// Code based off glut_example.c
 // Stanford University, CS248, Fall 2000
-//
-// Demonstrates basic use of GLUT toolkit for CS248 video game assignment.
-// More GLUT details at http://reality.sgi.com/mjk_asd/spec3/spec3.html
-// Here you'll find examples of initialization, basic viewing transformations,
-// mouse and keyboard callbacks, menus, some rendering primitives, lighting,
-// double buffering, Z buffering, and texturing.
-//
-// Matt Ginzton -- magi@cs.stanford.edu
+
 
 #include <GL/glut.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <iostream>
 
-#include "Parser.h"
+#include "CommandLineParser.h"
 #include "BezierPatch.h"
-//#include "texture.h"
 
 using namespace std;
 
 #define VIEWING_DISTANCE_MIN  2.0
-#define TEXTURE_ID_CUBE 1
 
-#define STRINGIFY(x) #x
-#define EXPAND(x) STRINGIFY(x)
-
-enum {
-	MENU_LIGHTING = 1,
-	MENU_POLYMODE,
-	MENU_TEXTURING,
-	MENU_SHADING,
-	MENU_EXIT
-};
-
-typedef int BOOL;
-#define TRUE  1
-#define FALSE 0
-static BOOL g_bLightingEnabled = TRUE;
-static BOOL g_bFillPolygons    = TRUE;
-static BOOL g_bSmoothShading   = TRUE;
-static BOOL g_bButton1Down     = FALSE;
+static bool g_bLightingEnabled = true;
+static bool g_bFillPolygons    = true;
+static bool g_bSmoothShading   = true;
+static bool g_bButton1Down     = false;
 static GLfloat g_fTeapotAngle  = 0.0;
 static GLfloat g_fInitViewDistance = VIEWING_DISTANCE_MIN;
 static GLfloat g_fViewDistance = 1.2*VIEWING_DISTANCE_MIN;
@@ -64,7 +38,8 @@ const float colorBronzeSpec[4] = { 1.0, 1.0, 0.4, 1.0 };
 const float colorBlue[4]       = { 0.0, 0.2, 1.0, 1.0 };
 const float colorNone[4]       = { 0.0, 0.0, 0.0, 0.0 };
 
-vector<BezierPatch, Eigen::aligned_allocator<BezierPatch> > patches;
+vector < BezierPatch, Eigen::aligned_allocator<BezierPatch> > patches;
+bool adaptive = false;
 
 void RenderObjects(void) {
 	glMatrixMode(GL_MODELVIEW);
@@ -81,9 +56,7 @@ void RenderObjects(void) {
 	glColor4fv(colorBronzeDiff);
 
 	//glutSolidTeapot(0.3);
-	for (int i = 0; i < patches.size(); i+= 1) {
-		patches[i].drawPatchSimple(false);
-	}
+	for (int i = 0; i < patches.size(); i+= 1) patches[i].drawPatchSimple(!adaptive);
 
 	glPopMatrix();
 }
@@ -130,7 +103,7 @@ void MouseButton(int button, int state, int x, int y) {
 	// Respond to mouse button presses.
 	// If button1 pressed, mark this state so we know in motion function.
 	if (button == GLUT_LEFT_BUTTON) {
-		g_bButton1Down = (state == GLUT_DOWN) ? TRUE : FALSE;
+		g_bButton1Down = (state == GLUT_DOWN) ? true : false;
 		g_fInitViewDistance = g_fViewDistance;
 		g_yClick = y;
 	}
@@ -147,34 +120,6 @@ void MouseMotion(int x, int y) {
 }
 
 void AnimateScene(void) {
-	glutPostRedisplay();
-}
-
-void SelectFromMenu(int idCommand) {
-	switch (idCommand) {
-	case MENU_LIGHTING:
-		g_bLightingEnabled = !g_bLightingEnabled;
-		if (g_bLightingEnabled)
-			glEnable(GL_LIGHTING);
-		else
-			glDisable(GL_LIGHTING);
-		break;
-	case MENU_POLYMODE:
-		g_bFillPolygons = !g_bFillPolygons;
-		glPolygonMode (GL_FRONT_AND_BACK, g_bFillPolygons ? GL_FILL : GL_LINE);
-		break;
-	case MENU_SHADING:
-		// OpenGL does not have Phong shading.
-		// So smooth shading means Gouraud shading which means the
-		// colors are interpolated from the vertices.
-		g_bSmoothShading = !g_bSmoothShading;
-		glShadeModel(g_bSmoothShading? GL_SMOOTH : GL_FLAT);
-		break;
-	case MENU_EXIT:
-		exit (0);
-		break;
-	}
-	// redraw
 	glutPostRedisplay();
 }
 
@@ -219,36 +164,35 @@ void Keyboard(unsigned char key, int x, int y) {
 		exit (0);
 		break;
 	case 'l': // light/ no light
-		SelectFromMenu(MENU_LIGHTING);
+		g_bLightingEnabled = !g_bLightingEnabled;
+		if (g_bLightingEnabled)
+			glEnable(GL_LIGHTING);
+		else
+			glDisable(GL_LIGHTING);
 		break;
 	case 'w':  // filled/ wireframe
-		SelectFromMenu(MENU_POLYMODE);
+		g_bFillPolygons = !g_bFillPolygons;
+		glPolygonMode (GL_FRONT_AND_BACK, g_bFillPolygons ? GL_FILL : GL_LINE);
 		break;
 	case 's':  // smooth/ flat shading
-		SelectFromMenu(MENU_SHADING);
+		g_bSmoothShading = !g_bSmoothShading;
+		glShadeModel(g_bSmoothShading? GL_SMOOTH : GL_FLAT);
 		break;
 	case '+': // zoom in
 		g_fViewDistance = g_fViewDistance - 0.05;
 		if (g_fViewDistance < VIEWING_DISTANCE_MIN)
 			g_fViewDistance = VIEWING_DISTANCE_MIN;
-		glutPostRedisplay();
 		break;
 	case '-': // zoom in
 		g_fViewDistance = g_fViewDistance + 0.05;
-		glutPostRedisplay();
+		break;
+	case 'a': // sampling - toggle between adaptive and uniform
+		adaptive = !adaptive;
+		cout<<" Sampling mode: "<<(adaptive? "Adaptive" : "Uniform")<<endl;
 		break;
 	}
-}
 
-
-int BuildPopupMenu (void) {
-	int menu;
-	menu = glutCreateMenu (SelectFromMenu);
-	glutAddMenuEntry ("Toggle lighting\tl",     MENU_LIGHTING);
-	glutAddMenuEntry ("Toggle polygon fill\tp", MENU_POLYMODE);
-	glutAddMenuEntry ("Toggle flat/smooth shading\tp", MENU_SHADING);
-	glutAddMenuEntry ("Exit demo\tEsc", MENU_EXIT);
-	return menu;
+	glutPostRedisplay();
 }
 
 
@@ -256,13 +200,12 @@ int main(int argc, char** argv) {
 
 	// read and tesselate the bezier patches
 	string fname = EXPAND (PROJECT_DATA_DIR) "/teapot.bez";
-	cout << EXPAND(PROJECT_DATA_DIR) "/test.bez" <<endl;
-	patches = readPatches (fname);
+	patches = intializePatchesFromCommandLine (argc, argv, adaptive);
+
 	for (int i = 0; i < patches.size(); i+=1 ) {
-		//patches[i].sampleUniformly();
+		patches[i].sampleUniformly();
 		patches[i].adaptiveSample();
 	}
-
 
 	// GLUT Window Initialization:
 	glutInit (&argc, argv);
@@ -281,10 +224,6 @@ int main(int argc, char** argv) {
 	glutMouseFunc(MouseButton);
 	glutMotionFunc(MouseMotion);
 	glutIdleFunc(AnimateScene);
-
-	// create popup menu
-	BuildPopupMenu();
-	glutAttachMenu(GLUT_RIGHT_BUTTON);
 
 	// Turn the flow of control over to GLUT
 	glutMainLoop();

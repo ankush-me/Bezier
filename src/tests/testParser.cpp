@@ -1,9 +1,5 @@
-#include "Parser.h"
+#include "FileParser.h"
 #include "Eigen/StdVector"
-
-
-#define STRINGIFY(x) #x
-#define EXPAND(x) STRINGIFY(x)
 
 int main (int argc, char **argv) {
 
@@ -19,7 +15,7 @@ int main (int argc, char **argv) {
 	 * Also include #include <Eigen/StdVector>   				*
 	 * 															*
 	 ************************************************************/
-	vector<BezierPatch, Eigen::aligned_allocator<BezierPatch> > x = readPatches (fname);
+	vector<BezierPatch, Eigen::aligned_allocator<BezierPatch> > x = readPatches (fname, 0.01);
 
 	for (int i = 0; i < x.size(); ++i) {
 		x[0].adaptiveSample();

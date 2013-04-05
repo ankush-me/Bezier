@@ -142,6 +142,8 @@ public:
 	Vector3f evalPoint (float u, float v);
 	Vector3f evalNormal (float u, float v);
 
+	// Gets the opposite corners of AABB of patch
+	void findAABB (Vector3f & minPoint, Vector3f & maxPoint);
 	/* Draws the patch in openGL.
 	 * if DRAWUNIFORM is true, uniformly sampled patch is drawn,
 	 * else adaptively-sampled patch is drawn.*/

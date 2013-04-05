@@ -107,6 +107,11 @@ Vector3f BezierPatch::evalNormal (float u, float v) {
 	return surfaceEval2DNormal (matX, matY, matZ, u, v);
 }
 
+void BezierPatch::findAABB (Vector3f & minPoint, Vector3f & maxPoint) {
+	minPoint.x() = matX.minCoeff(); minPoint.y() = matY.minCoeff(); minPoint.z() = matZ.minCoeff();
+	maxPoint.x() = matX.maxCoeff(); maxPoint.y() = matY.maxCoeff(); maxPoint.z() = matZ.maxCoeff();
+}
+
 int serializeIndex(const int i, const int j, const int N) {
 	return i*N+j;
 }
