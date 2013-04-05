@@ -1,18 +1,9 @@
-// glut_example.c
-// Stanford University, CS248, Fall 2000
-//
-// Demonstrates basic use of GLUT toolkit for CS248 video game assignment.
-// More GLUT details at http://reality.sgi.com/mjk_asd/spec3/spec3.html
-// Here you'll find examples of initialization, basic viewing transformations,
-// mouse and keyboard callbacks, menus, some rendering primitives, lighting,
-// double buffering, Z buffering, and texturing.
-//
-// Matt Ginzton -- magi@cs.stanford.edu
-
 #include <GL/glut.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <iostream>
+
+#include <stdlib.h>
+#include <stdio.h>
+
 
 #include "BezierPatch.h"
 //#include "texture.h"
@@ -191,6 +182,7 @@ int BuildPopupMenu (void)
 
 int main(int argc, char** argv)
 {
+
 	// GLUT Window Initialization:
 	glutInit (&argc, argv);
 	glutInitWindowSize (g_Width, g_Height);
@@ -209,6 +201,7 @@ int main(int argc, char** argv)
 	BuildPopupMenu ();
 	//glutAttachMenu (GLUT_RIGHT_BUTTON);
 	// Turn the flow of control over to GLUT
+
 	glutMainLoop ();
 	return 0;
 }

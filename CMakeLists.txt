@@ -11,7 +11,8 @@ set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
 
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)
-include_directories( ${OPENGL_INCLUDE_DIRS}  ${GLUT_INCLUDE_DIRS} )
+
+include_directories(  ${OPENGL_INCLUDE_DIRS}  ${GLUT_INCLUDE_DIRS} )
 
 add_subdirectory(lib)
 add_subdirectory(src)

@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <iostream>
 
+#include "Parser.h"
 #include "BezierPatch.h"
 //#include "texture.h"
 
@@ -21,6 +22,9 @@ using namespace std;
 
 #define VIEWING_DISTANCE_MIN  2.0
 #define TEXTURE_ID_CUBE 1
+
+#define STRINGIFY(x) #x
+#define EXPAND(x) STRINGIFY(x)
 
 enum {
 	MENU_LIGHTING = 1,
@@ -60,6 +64,8 @@ const float colorBronzeSpec[4] = { 1.0, 1.0, 0.4, 1.0 };
 const float colorBlue[4]       = { 0.0, 0.2, 1.0, 1.0 };
 const float colorNone[4]       = { 0.0, 0.0, 0.0, 0.0 };
 
+vector<BezierPatch, Eigen::aligned_allocator<BezierPatch> > patches;
+
 void RenderObjects(void) {
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
@@ -74,7 +80,11 @@ void RenderObjects(void) {
 	glMaterialf(GL_FRONT, GL_SHININESS, 50.0);
 	glColor4fv(colorBronzeDiff);
 
-	glutSolidTeapot(0.3);
+	//glutSolidTeapot(0.3);
+	for (int i = 0; i < patches.size(); i+= 1) {
+		patches[i].drawPatchSimple(true);
+	}
+
 	glPopMatrix();
 }
 
@@ -242,6 +252,16 @@ int BuildPopupMenu (void) {
 
 
 int main(int argc, char** argv) {
+
+	// read and tesselate the bezier patches
+	string fname = EXPAND (PROJECT_DATA_DIR) "/test.bez";
+	cout << EXPAND(PROJECT_DATA_DIR) "/test.bez" <<endl;
+	patches = readPatches (fname);
+	for (int i = 0; i < patches.size(); i+=1 ) {
+		patches[i].sampleUniformly();
+	}
+
+
 	// GLUT Window Initialization:
 	glutInit (&argc, argv);
 	glutInitWindowSize (g_Width, g_Height);

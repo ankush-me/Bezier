@@ -8,9 +8,13 @@
 #include "Eigen/Dense"
 #include "Eigen/StdVector"
 
+#define GL_GLEXT_PROTOTYPES
+#include <GL/glut.h>
+#include <GL/glx.h>
+#include <GL/glext.h>
+
 using namespace Eigen;
 using namespace std;
-
 
 
 /************************************************************
@@ -25,10 +29,15 @@ using namespace std;
 
 // vertex which stores position and normal
 struct VertexNormal {
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	Vector3f pos;
 	Vector3f normal;
 	VertexNormal (const Vector3f &_pos, const Vector3f & _normal) : pos(_pos), normal(_normal) {}
+};
+
+// vertex which stores position and normal
+struct VertexNormalGL {
+	float pos[3];
+	float normal[3];
 };
 
 /* Class to represent a Bezier Patch: Defined by 16 control points.*/
@@ -110,11 +119,13 @@ class BezierPatch {
 
 public:
 
-	vector<VertexNormal> uniformSamples;  // vertices found using uniform samples
+	vector<VertexNormalGL> uniformSamplesGL; // vertices found using uniform samples
+	vector<VertexNormalGL> adaptiveSamplesGL;
 	vector<VertexNormal> adaptiveSamples; // vertices found using adaptive sampling
 
 	vector<Triangle> uniformTriangles;    // triangles found using uniform samples
 	vector<Triangle> adaptiveTriangles;   // triangles found using adaptive sampling
+
 
 	BezierPatch (const MatrixXf & _data, float _tolerance = 0.1, float _step=0.01);
 	Vector3f evalPoint (float u, float v);
@@ -124,6 +135,7 @@ public:
 	 * if DRAWUNIFORM is true, uniformly sampled patch is drawn,
 	 * else adaptively-sampled patch is drawn.*/
 	void drawPatch(bool drawUniform);
+	void drawPatchSimple(bool drawUniform);
 
 	/** Sample the bezier patch uniformly with STEP.*/
 	void sampleUniformly();
@@ -132,5 +144,6 @@ public:
 	void splitTriangle (vector<float> us, vector<float> vs, vector<unsigned int> inds);
 };
 
+void alp();
 
 #endif

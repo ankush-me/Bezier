@@ -107,18 +107,13 @@ Vector3f BezierPatch::evalNormal (float u, float v) {
 	return surfaceEval2DNormal (matX, matY, matZ, u, v);
 }
 
-void getXY(int i, const int N, int &x, int &y) {
-	x = (int) i/N;
-	y = (int) i % N;
-}
-
 int serializeIndex(const int i, const int j, const int N) {
 	return i*N+j;
 }
 
 /** Sample the bezier patch uniformly with STEP.*/
 void BezierPatch::sampleUniformly(){
-	uniformSamples.clear();
+	uniformSamplesGL.clear();
 
 	const int M = (int) ceil(1.0/step) - 1;
 	vector<float> step_points;
@@ -133,9 +128,11 @@ void BezierPatch::sampleUniformly(){
     // sample the bezier patch
     for (int ui = 0; ui < num_points; ui +=1) {
     	for (int vi = 0; vi < num_points; vi +=1) {
-    		VertexNormal vn (surfaceEval2D(matX, matY, matZ, step_points[ui], step_points[vi]),
-    				         surfaceEval2DNormal(matX, matY, matZ, step_points[ui], step_points[vi]));
-    		uniformSamples.push_back(vn);
+    		Vector3f pos    = surfaceEval2D(matX, matY, matZ, step_points[ui], step_points[vi]);
+    		Vector3f normal = surfaceEval2DNormal(matX, matY, matZ, step_points[ui], step_points[vi]);
+    		VertexNormalGL vn = {{pos.x(), pos.y(), pos.z()},
+    				             {normal.x(), normal.y(), normal.z()}};
+    		uniformSamplesGL.push_back(vn);
     	}
     }
 
@@ -263,4 +260,106 @@ void BezierPatch::splitTriangle (vector<float> us, vector<float> vs, vector<unsi
 		cout<<"      "<<us[2]<<", "<<vs[2]<<endl;
 		cout<<"Size of adaptive triangles: "<<adaptiveTriangles.size()<<endl;
 	}
+}
+
+
+/** OpenGL code to draw the Bezier Patch */
+void BezierPatch::drawPatch(bool drawUniform) {
+	const vector<Triangle> *tris = drawUniform? &uniformTriangles : &adaptiveTriangles;
+	const vector<VertexNormalGL> *verts = drawUniform? &uniformSamplesGL : &adaptiveSamplesGL;
+
+	// initialize vertex positions and normals
+	GLuint VertexVBOID, IndexVBOID;
+	glGenBuffers(1,  &VertexVBOID);
+	glBindBuffer(GL_ARRAY_BUFFER, VertexVBOID);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(VertexNormalGL)*verts->size(), &(verts->at(0).pos[0]), GL_STATIC_DRAW);
+
+	// initialize indices
+	glGenBuffers(1, &IndexVBOID);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IndexVBOID);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(Triangle)*tris->size(), &(tris->at(0).indices[0]), GL_STATIC_DRAW);
+
+	// vertex positions
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glVertexPointer(3, GL_FLOAT, sizeof(VertexNormalGL), ((void*)(0)));
+
+	// vertex normals
+	glEnableClientState(GL_NORMAL_ARRAY);
+	glNormalPointer(GL_FLOAT, sizeof(VertexNormalGL), ((void*)(12)));
+
+	// indices
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IndexVBOID);
+
+	// render
+	glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_SHORT, ((void*)(0)));
+
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	glDisableClientState(GL_NORMAL_ARRAY);
+}
+
+/** OpenGL code to draw the Bezier Patch */
+void BezierPatch::drawPatchSimple(bool drawUniform) {
+	const vector<Triangle> *tris = drawUniform? &uniformTriangles : &adaptiveTriangles;
+	const vector<VertexNormalGL> *verts = drawUniform? &uniformSamplesGL : &adaptiveSamplesGL;
+
+	for (int t = 0; t < tris->size(); t +=1) {
+
+		Triangle T = tris->at(t);
+		VertexNormalGL v1 = verts->at(T.indices[0]);
+		VertexNormalGL v2 = verts->at(T.indices[1]);
+		VertexNormalGL v3 = verts->at(T.indices[2]);
+
+		glBegin(GL_TRIANGLES);
+		glVertex3f(v1.pos[0], v1.pos[1], v1.pos[2]);
+		glVertex3f(v2.pos[0], v2.pos[1], v2.pos[2]);
+		glVertex3f(v3.pos[0], v3.pos[1], v3.pos[2]);
+		glEnd();
+	}
+}
+
+
+
+struct MyVertex
+{
+  float x, y, z;        //Vertex
+  float nx, ny, nz;     //Normal
+  float s0, t0;         //Texcoord0
+};
+
+
+void alp() {
+
+	// initialize vertex positions and normals
+	MyVertex pvertex[3];
+	GLuint VertexVBOID, IndexVBOID;
+	glGenBuffers(1,  &VertexVBOID);
+	glBindBuffer(GL_ARRAY_BUFFER, VertexVBOID);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(MyVertex)*3, &pvertex[0].x, GL_STATIC_DRAW);
+
+	// initialize indices
+	ushort pindices[3];
+	pindices[0] = 0;
+	pindices[1] = 1;
+	pindices[2] = 2;
+	glGenBuffers(1, &IndexVBOID);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IndexVBOID);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(ushort)*3, pindices, GL_STATIC_DRAW);
+
+
+	// vertex positions
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glVertexPointer(3, GL_FLOAT, sizeof(MyVertex), ((void*)(0)));
+
+	// vertex normals
+	glEnableClientState(GL_NORMAL_ARRAY);
+	glNormalPointer(GL_FLOAT, sizeof(MyVertex), ((void*)(12)));
+
+	// indices
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IndexVBOID);
+
+	// render
+	glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_SHORT, ((void*)(0)));   //The starting point of the IBO
+
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	glDisableClientState(GL_NORMAL_ARRAY);
 }
