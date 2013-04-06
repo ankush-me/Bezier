@@ -1,4 +1,34 @@
-Bezier
-======
+CS184 - Foundations of Computer Graphics
+Assignment 3: Bezier Subdivision
+==========================================
 
-CS184 Bezier Surfaces. Adaptive Subdivision. OpenGL
+Names: 
+------
+  Ankush Gupta (cs184-bd)
+  Sibi Venkatesan (cs184-bf)
+
+Platform: 
+---------
+  Ubuntu (tested on hive14).
+
+Submission: 
+-----------
+  Done by Sibi Venkatesan (cs184-bf).
+  Worked on Ubuntu 12.04 on personal computer[s].
+  Checked and submitted from hive14.cs.berkeley.edu
+
+IMPORTANT:
+----------
+  Running 'make' will not work immediately (sorry!). But cmake will make a Makefile for you.
+  Please execute the following commands:
+
+  # If you want:
+  mkdir build
+  cd build
+
+  # Replace <project_directory> below with appropriate directory.
+  # ".." will do if you make build directory in project directory.
+  cmake <project_directory>
+
+  # Now you can make the project!
+  make

@@ -1,4 +1,6 @@
-// Code based off glut_example.c
+// CS184 - Spring 2013
+// Project 3
+// Code based partly off glut_example.c
 // Stanford University, CS248, Fall 2000
 
 #include <limits>
@@ -45,7 +47,24 @@ const float colorNone[4]       = { 0.0, 0.0, 0.0, 0.0 };
 vector < BezierPatch, Eigen::aligned_allocator<BezierPatch> > patches;
 bool g_adaptive = false;
 
-void RenderObjects(void) {
+void display(void) {
+
+	// Clear frame buffer and depth buffer
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	// Set up viewing transformation, looking down -Z axis
+	glLoadIdentity();
+	gluLookAt(g_boxCenter.x(), g_boxCenter.y(), g_boxCenter.z()+g_fViewDistance,
+			  g_boxCenter.x(), g_boxCenter.y(), g_boxCenter.z(),
+			  0, 			   1, 				0);
+
+	// Set up the stationary light
+	glLightfv(GL_LIGHT0, GL_POSITION, g_lightPos1);
+	glLightfv(GL_LIGHT0, GL_POSITION, g_lightPos2);
+	//	 glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+
+
+	// Render the scene
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
 
@@ -63,25 +82,8 @@ void RenderObjects(void) {
 	for (int i = 0; i < patches.size(); i+= 1) patches[i].drawPatch(!g_adaptive);
 
 	glPopMatrix();
-}
 
-void display(void) {
-	// Clear frame buffer and depth buffer
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	// Set up viewing transformation, looking down -Z axis
-	glLoadIdentity();
-	gluLookAt(g_boxCenter.x(), g_boxCenter.y(), g_boxCenter.z()+g_fViewDistance,
-			  g_boxCenter.x(), g_boxCenter.y(), g_boxCenter.z(),
-			  0, 			   1, 				0);
-	// Set up the stationary light
-	glLightfv(GL_LIGHT0, GL_POSITION, g_lightPos1);
-	glLightfv(GL_LIGHT0, GL_POSITION, g_lightPos2);
-	//	 glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
-
-	// Render the scene
-	RenderObjects();
-	// Make sure changes appear onscreen
 	glutSwapBuffers();
 }
 
@@ -109,7 +111,7 @@ void InitGraphics(void) {
 void MouseButton(int button, int state, int x, int y) {
 	// Respond to mouse button presses.
 	// If button1 pressed, mark this state so we know in motion function.
-	if (button == GLUT_LEFT_BUTTON) {
+	if (button == GLUT_RIGHT_BUTTON) {
 		g_bButton1Down = (state == GLUT_DOWN) ? true : false;
 		g_fInitViewDistance = g_fViewDistance;
 		g_yClick = y;
