@@ -25,4 +25,5 @@ target_link_libraries(testRender  ${OPENGL_LIBRARIES} ${GLUT_LIBRARY})
 add_executable(dispApp tests/dispApp.cpp
 						  BezierPatch.cpp)
 target_link_libraries(dispApp  ${OPENGL_LIBRARIES} ${GLUT_LIBRARY})
-						  
+
+add_executable(genFile gen_file.cpp)						  

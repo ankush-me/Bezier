@@ -197,7 +197,6 @@ void BezierPatch::adaptiveSample () {
 
 bool BezierPatch::shouldSplit(const Vector3f &p1,
 		const Vector3f & p2, const Vector3f &pt, float frac) {
-	//cout << "error: "<<(frac*p1 + (1-frac)*p2 - pt).norm()<<" | tol : "<<tolerance<<endl;
 	return ((frac*p1 + (1-frac)*p2 - pt).norm() > tolerance);
 }
 
@@ -227,7 +226,6 @@ void BezierPatch::checkAndSplit(const float us[3], const float vs[3],
 
 	int numSplit = (split12? 1:0) + (split23? 1:0) + (split31? 1:0);
 
-	//if ( depth > 10 || !(split12 || split23 || split31)) {// good triangle keep it
 	if (!(split12 || split23 || split31)) {// good triangle keep it
 		Triangle T(inds[0], inds[1], inds[2]);
 		adaptiveTriangles.push_back(T);

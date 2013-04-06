@@ -204,6 +204,9 @@ void Keyboard(unsigned char key, int x, int y) {
 	glutPostRedisplay();
 }
 
+/*
+ * Get the ends of the AABB for the object in the scene
+*/
 void getSceneAABB(Vector3f & minPoint, Vector3f & maxPoint) {
 	if (!patches.size())
 		return;
@@ -211,16 +214,17 @@ void getSceneAABB(Vector3f & minPoint, Vector3f & maxPoint) {
 	MatrixXf minMat(patches.size(), 3), maxMat(patches.size(), 3);
 	for (int i = 0; i < patches.size(); i +=1 ) {
 		patches[i].findAABB(minPoint, maxPoint);
-		cout << "   >> min pt : "<< minPoint.transpose() << " | max pt : "<<maxPoint.transpose()<<endl;
 		minMat.row(i) = minPoint;
 		maxMat.row(i) = maxPoint;
 	}
 
 	minPoint = Vector3f(minMat.col(0).minCoeff(), minMat.col(1).minCoeff(), minMat.col(2).minCoeff());
 	maxPoint = Vector3f(maxMat.col(0).maxCoeff(), maxMat.col(1).maxCoeff(), maxMat.col(2).maxCoeff());
-	cout << ">>>>>> min pt : "<< minPoint.transpose() << " | max pt : "<<maxPoint.transpose()<<endl;
 }
 
+/*
+ * Initialize the position of the camera to view entire object
+ */
 void InitCameraPos () {
 
 	Vector3f minPoint, maxPoint;
@@ -236,12 +240,6 @@ void InitCameraPos () {
 	float zBias = 2.0;
 
 	g_fViewDistance = max (zDist + zBias + (maxPoint-g_boxCenter).z(), (float)VIEWING_DISTANCE_MIN);
-
-	cout<<endl<<"VIEW DIST: "<<g_fViewDistance<<endl<<"MIN DIST: "<<VIEWING_DISTANCE_MIN<<endl;
-
-	Vector3f eyeCenter = g_boxCenter - Vector3f(0, 0, g_fViewDistance);
-
-	cout << ">>>>> boxCenter : "<< g_boxCenter.transpose() << " | eyeCenter : "<<eyeCenter.transpose()<<endl;
 }
 
 

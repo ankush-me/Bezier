@@ -32,3 +32,12 @@ IMPORTANT:
 
   # Now you can make the project!
   make
+
+Running the code:
+-----------------
+  The executable for the code is "dispApp". 
+  Assuming you are in the build directory, run the code by typing:
+
+  ./dispApp ../data/teapot.bez 0.01 -a
+
+  or something similar.
