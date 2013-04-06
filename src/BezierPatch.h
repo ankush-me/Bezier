@@ -148,15 +148,11 @@ public:
 	 * if DRAWUNIFORM is true, uniformly sampled patch is drawn,
 	 * else adaptively-sampled patch is drawn.*/
 	void drawPatch(bool drawUniform);
-	void drawPatchSimple(bool drawUniform);
 
 	/** Sample the bezier patch uniformly with STEP.*/
 	void sampleUniformly();
 
 	void adaptiveSample();
-	void splitTriangle (vector<float> us, vector<float> vs, vector<unsigned int> inds);
 };
-
-void alp();
 
 #endif

@@ -108,8 +108,8 @@ Vector3f BezierPatch::evalNormal (float u, float v) {
 }
 
 void BezierPatch::findAABB (Vector3f & minPoint, Vector3f & maxPoint) {
-	minPoint.x() = matX.minCoeff(); minPoint.y() = matY.minCoeff(); minPoint.z() = matZ.minCoeff();
-	maxPoint.x() = matX.maxCoeff(); maxPoint.y() = matY.maxCoeff(); maxPoint.z() = matZ.maxCoeff();
+	minPoint = Vector3f(matX.minCoeff(), matY.minCoeff(), matZ.minCoeff());
+	maxPoint = Vector3f(matX.maxCoeff(), matY.maxCoeff(), matZ.maxCoeff());
 }
 
 int serializeIndex(const int i, const int j, const int N) {
@@ -359,129 +359,9 @@ void BezierPatch::checkAndSplit(const float us[3], const float vs[3],
 	}
 }
 
-/**
- * Splits triangle described by us and vs, only if error is greater than threshold.
- * TODO: Might want to change order of inserting into us, vs so as to make triangulation
- * look good.
- */
-void BezierPatch::splitTriangle (vector<float> us, vector<float> vs, vector<unsigned int> inds) {
-
-	Vector3f trianglePt0 = adaptiveSamples[inds[0]].pos;
-	Vector3f trianglePt1 = adaptiveSamples[inds[1]].pos;
-	Vector3f trianglePt2 = adaptiveSamples[inds[2]].pos;
-
-	// Check distance of midpoints
-	if (((trianglePt0 + trianglePt1)/2 - evalPoint((us[0]+us[1])/2, (vs[0]+vs[1])/2)).norm() > tolerance) {
-
-		adaptiveSamples.push_back(VertexNormal(evalPoint((us[0]+us[1])/2, (vs[0]+vs[1])/2), evalNormal((us[0]+us[1])/2, (vs[0]+vs[1])/2)));
-		unsigned int newInd = adaptiveSamples.size()-1;
-
-		vector<float> us1(3), vs1(3);
-		vector<float> us2(3), vs2(3);
-		vector<unsigned int> inds1(3), inds2(3);
-		us1[0] = us[0]; us1[1] = (us[0]+us[1])/2; us1[2] = us[2];
-		vs1[0] = vs[0]; vs1[1] = (vs[0]+vs[1])/2; vs1[2] = vs[2];
-		inds1[0] = inds[0]; inds1[1] = newInd; inds1[2] = inds[2];
-		us2[0] = (us[0]+us[1])/2; us2[1] = us[1]; us2[2] = us[2];
-		vs2[0] = (vs[0]+vs[1])/2; vs2[1] = vs[1]; vs2[2] = vs[2];
-		inds2[0] = newInd; inds2[1] = inds[1]; inds2[2] = inds[2];
-
-		splitTriangle(us1, vs1, inds1);
-		splitTriangle(us2, vs2, inds2);
-
-	} else if (((trianglePt1 + trianglePt2)/2 - evalPoint((us[1]+us[2])/2, (vs[1]+vs[2])/2)).norm() > tolerance) {
-
-		adaptiveSamples.push_back(VertexNormal(evalPoint((us[1]+us[2])/2, (vs[1]+vs[2])/2), evalNormal((us[1]+us[2])/2, (vs[1]+vs[2])/2)));
-		unsigned int newInd = adaptiveSamples.size()-1;
-
-		vector<float> us1(3), vs1(3);
-		vector<float> us2(3), vs2(3);
-		vector<unsigned int> inds1(3), inds2(3);
-		us1[0] = us[0]; us1[1] = us[1]; us1[2] = (us[1]+us[2])/2;
-		vs1[0] = vs[0]; vs1[1] = vs[1]; vs1[2] = (vs[1]+vs[2])/2;
-		inds1[0] = inds[0]; inds1[1] = inds[1]; inds1[2] = newInd;
-		us2[0] = us[0]; us2[1] = (us[1]+us[2])/2; us2[2] = us[2];
-		vs2[0] = vs[0]; vs2[1] = (vs[1]+vs[2])/2; vs2[2] = vs[2];
-		inds2[0] = inds[0]; inds2[1] = newInd; inds2[2] = inds[2];
-
-		splitTriangle(us1, vs1, inds1);
-		splitTriangle(us2, vs2, inds2);
-
-	} else if (((trianglePt0 + trianglePt2)/2 - evalPoint((us[0]+us[2])/2, (vs[0]+vs[2])/2)).norm() > tolerance) {
-
-		adaptiveSamples.push_back(VertexNormal(evalPoint((us[0]+us[2])/2, (vs[0]+vs[2])/2), evalNormal((us[0]+us[2])/2, (vs[1]+vs[2])/2)));
-		unsigned int newInd = adaptiveSamples.size()-1;
-
-		vector<float> us1(3), vs1(3);
-		vector<float> us2(3), vs2(3);
-		vector<unsigned int> inds1(3), inds2(3);
-		us1[0] = us[0]; us1[1] = us[1]; us1[2] = (us[0]+us[2])/2;
-		vs1[0] = vs[0]; vs1[1] = vs[1]; vs1[2] = (vs[0]+vs[2])/2;
-		inds1[0] = inds[0]; inds1[1] = inds[1]; inds1[2] = newInd;
-		us2[0] = (us[0]+us[2])/2; us2[1] = us[1]; us2[2] = us[2];
-		vs2[0] = (vs[0]+vs[2])/2; vs2[1] = vs[1]; vs2[2] = vs[2];
-		inds2[0] = newInd; inds2[1] = inds[1]; inds2[2] = inds[2];
-
-		splitTriangle(us1, vs1, inds1);
-		splitTriangle(us2, vs2, inds2);
-
-	} else {
-		Triangle t = Triangle(inds);
-		vector<unsigned int> indos = t.indices;
-		adaptiveTriangles.push_back(t);
-		cout<<"\n\nStuff: \n    Pos: "<<endl;
-		cout<<"      "<<adaptiveSamples[indos[0]].pos.transpose()<<endl;
-		cout<<"      "<<adaptiveSamples[indos[1]].pos.transpose()<<endl;
-		cout<<"      "<<adaptiveSamples[indos[2]].pos.transpose()<<endl;
-		cout<<"    Normals: "<<endl;
-		cout<<"      "<<adaptiveSamples[indos[0]].normal.transpose()<<endl;
-		cout<<"      "<<adaptiveSamples[indos[1]].normal.transpose()<<endl;
-		cout<<"      "<<adaptiveSamples[indos[2]].normal.transpose()<<endl;
-		cout<<"    U's and V's: "<<endl;
-		cout<<"      "<<us[0]<<", "<<vs[0]<<endl;
-		cout<<"      "<<us[1]<<", "<<vs[1]<<endl;
-		cout<<"      "<<us[2]<<", "<<vs[2]<<endl;
-		cout<<"Size of adaptive triangles: "<<adaptiveTriangles.size()<<endl;
-	}
-}
-
 
 /** OpenGL code to draw the Bezier Patch */
 void BezierPatch::drawPatch(bool drawUniform) {
-	const vector<Triangle> *tris = drawUniform? &uniformTriangles : &adaptiveTriangles;
-	const vector<VertexNormalGL> *verts = drawUniform? &uniformSamplesGL : &adaptiveSamplesGL;
-
-	// initialize vertex positions and normals
-	GLuint VertexVBOID, IndexVBOID;
-	glGenBuffers(1,  &VertexVBOID);
-	glBindBuffer(GL_ARRAY_BUFFER, VertexVBOID);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(VertexNormalGL)*verts->size(), &(verts->at(0).pos[0]), GL_STATIC_DRAW);
-
-	// initialize indices
-	glGenBuffers(1, &IndexVBOID);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IndexVBOID);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(Triangle)*tris->size(), &(tris->at(0).indices[0]), GL_STATIC_DRAW);
-
-	// vertex positions
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glVertexPointer(3, GL_FLOAT, sizeof(VertexNormalGL), ((void*)(0)));
-
-	// vertex normals
-	glEnableClientState(GL_NORMAL_ARRAY);
-	glNormalPointer(GL_FLOAT, sizeof(VertexNormalGL), ((void*)(12)));
-
-	// indices
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IndexVBOID);
-
-	// render
-	glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_SHORT, ((void*)(0)));
-
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	glDisableClientState(GL_NORMAL_ARRAY);
-}
-
-/** OpenGL code to draw the Bezier Patch */
-void BezierPatch::drawPatchSimple(bool drawUniform) {
 	const vector<Triangle> *tris = drawUniform? &uniformTriangles : &adaptiveTriangles;
 	const vector<VertexNormalGL> *verts = drawUniform? &uniformSamplesGL : &adaptiveSamplesGL;
 
@@ -505,51 +385,4 @@ void BezierPatch::drawPatchSimple(bool drawUniform) {
 
 		glEnd();
 	}
-}
-
-
-
-struct MyVertex
-{
-	float x, y, z;        //Vertex
-	float nx, ny, nz;     //Normal
-	float s0, t0;         //Texcoord0
-};
-
-
-void alp() {
-
-	// initialize vertex positions and normals
-	MyVertex pvertex[3];
-	GLuint VertexVBOID, IndexVBOID;
-	glGenBuffers(1,  &VertexVBOID);
-	glBindBuffer(GL_ARRAY_BUFFER, VertexVBOID);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(MyVertex)*3, &pvertex[0].x, GL_STATIC_DRAW);
-
-	// initialize indices
-	ushort pindices[3];
-	pindices[0] = 0;
-	pindices[1] = 1;
-	pindices[2] = 2;
-	glGenBuffers(1, &IndexVBOID);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IndexVBOID);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(ushort)*3, pindices, GL_STATIC_DRAW);
-
-
-	// vertex positions
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glVertexPointer(3, GL_FLOAT, sizeof(MyVertex), ((void*)(0)));
-
-	// vertex normals
-	glEnableClientState(GL_NORMAL_ARRAY);
-	glNormalPointer(GL_FLOAT, sizeof(MyVertex), ((void*)(12)));
-
-	// indices
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IndexVBOID);
-
-	// render
-	glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_SHORT, ((void*)(0)));   //The starting point of the IBO
-
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	glDisableClientState(GL_NORMAL_ARRAY);
 }
